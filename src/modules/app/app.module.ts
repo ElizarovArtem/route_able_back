@@ -6,6 +6,8 @@ import { AuthModule } from '../auth/auth.module';
 import { AuthCodes } from '../../entities /auth.entity';
 import { Day } from '../../entities /day.entity';
 import { Meal } from '../../entities /meal.entity';
+import { MealModule } from '../meal/meal.module';
+import { DayModule } from '../day/day.module';
 
 @Module({
   imports: [
@@ -21,6 +23,8 @@ import { Meal } from '../../entities /meal.entity';
     }),
     UserModule,
     AuthModule,
+    MealModule,
+    DayModule,
   ],
   controllers: [],
   providers: [],

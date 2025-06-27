@@ -16,7 +16,7 @@ export class Day {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  @ManyToOne(() => User, (user) => user.days, { onDelete: 'CASCADE' })
   user: User;
 
   @Column({ type: 'date' })

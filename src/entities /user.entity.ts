@@ -1,8 +1,9 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { Day } from './day.entity';
 
 @Entity('users')
 export class User {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn('uuid')
   id: number;
 
   @Column({ nullable: true })
@@ -13,4 +14,7 @@ export class User {
 
   @Column()
   phone: string;
+
+  @OneToMany(() => Day, (day) => day.user, { onDelete: 'CASCADE' })
+  days: Day[];
 }

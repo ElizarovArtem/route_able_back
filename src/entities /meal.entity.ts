@@ -6,6 +6,7 @@ import {
   CreateDateColumn,
 } from 'typeorm';
 import { Day } from './day.entity';
+import { MealType } from '../config/emuns/meal';
 
 @Entity('meals')
 export class Meal {
@@ -17,6 +18,9 @@ export class Meal {
 
   @Column()
   name: string;
+
+  @Column({ type: 'enum', enum: MealType })
+  mealType: MealType;
 
   @Column({ type: 'int' })
   calories: number;

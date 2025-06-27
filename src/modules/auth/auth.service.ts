@@ -68,10 +68,16 @@ export class AuthService {
     try {
       const payload = this.jwtService.verify(refreshToken);
 
-      const newAccessToken = this.jwtService.sign(
-        { sub: payload.sub },
-        { expiresIn: '15m' },
-      );
+      const newPayload = {
+        id: payload.id,
+        phone: payload.phone,
+        roles: payload.roles,
+        name: payload.name,
+      };
+
+      const newAccessToken = this.jwtService.sign(newPayload, {
+        expiresIn: '15m',
+      });
 
       return { newAccessToken };
     } catch {
