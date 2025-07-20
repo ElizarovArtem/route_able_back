@@ -11,7 +11,7 @@ import {
 import { MealService } from './meal.service';
 import { CreateMealDto } from './dto/create-meal.dto';
 import { Request } from 'express';
-import { User } from '../../entities /user.entity';
+import { User } from '../../entities/user.entity';
 import { JwtAuthGuard } from '../../libs/guards/auth.guard';
 
 @Controller('meals')

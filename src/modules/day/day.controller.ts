@@ -10,7 +10,7 @@ import {
 import { DayService } from './day.service';
 // import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { Request } from 'express';
-import { User } from '../../entities /user.entity';
+import { User } from '../../entities/user.entity';
 
 @Controller('days')
 // @UseGuards(JwtAuthGuard)

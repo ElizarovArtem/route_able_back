@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Day } from '../../entities /day.entity';
-import { User } from '../../entities /user.entity';
+import { Day } from '../../entities/day.entity';
+import { User } from '../../entities/user.entity';
 
 @Injectable()
 export class DayService {

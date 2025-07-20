@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Meal } from '../../entities /meal.entity';
+import { Meal } from '../../entities/meal.entity';
 import { DayService } from '../day/day.service';
-import { User } from '../../entities /user.entity';
+import { User } from '../../entities/user.entity';
 import { CreateMealDto } from './dto/create-meal.dto';
 
 @Injectable()

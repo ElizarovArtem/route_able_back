@@ -1,8 +1,27 @@
-import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Req,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { UserService } from './user.service';
-import { User } from '../../entities /user.entity';
+import { User } from '../../entities/user.entity';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { uploadAvatar } from './multer-s3.config';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { Request } from 'express';
+import { JwtAuthGuard } from 'src/libs/guards/auth.guard';
+// import { File } from 'multer-s3';
 
 @Controller('user')
+@UseGuards(JwtAuthGuard)
 export class UserController {
   constructor(private readonly usersService: UserService) {}
 
@@ -21,13 +40,17 @@ export class UserController {
     return this.usersService.findOne(phone);
   }
 
-  // @Put(':id')
-  // update(
-  //   @Param('id') id: string,
-  //   @Body() updateData: Partial<User>,
-  // ): Promise<User> {
-  //   return this.usersService.update(Number(id), updateData);
-  // }
+  @Patch()
+  // @UseInterceptors(FileInterceptor('avatar', uploadAvatar))
+  async updateProfile(
+    @Body() dto: UpdateUserDto,
+    @UploadedFile() file: File & { location: string },
+    @Req() req: Request,
+  ) {
+    const user = req.user as User;
+    const avatarUrl = file?.location; // публичная ссылка
+    return this.usersService.updateUser(user, dto, avatarUrl);
+  }
 
   @Delete(':id')
   remove(@Param('id') id: string): Promise<void> {

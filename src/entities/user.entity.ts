@@ -4,7 +4,7 @@ import { Day } from './day.entity';
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn('uuid')
-  id: number;
+  id: string;
 
   @Column({ nullable: true })
   name: string;
@@ -17,4 +17,7 @@ export class User {
 
   @OneToMany(() => Day, (day) => day.user, { onDelete: 'CASCADE' })
   days: Day[];
+
+  @Column({ nullable: true })
+  avatar?: string;
 }

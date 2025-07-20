@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { UserModule } from '../user/user.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from '../../entities /user.entity';
+import { User } from '../../entities/user.entity';
 import { AuthModule } from '../auth/auth.module';
-import { AuthCodes } from '../../entities /auth.entity';
-import { Day } from '../../entities /day.entity';
-import { Meal } from '../../entities /meal.entity';
+import { AuthCodes } from '../../entities/auth.entity';
+import { Day } from '../../entities/day.entity';
+import { Meal } from '../../entities/meal.entity';
 import { MealModule } from '../meal/meal.module';
 import { DayModule } from '../day/day.module';
 
