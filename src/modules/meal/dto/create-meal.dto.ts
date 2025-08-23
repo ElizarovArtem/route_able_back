@@ -1,12 +1,8 @@
-import { IsDateString, IsEnum, IsNotEmpty, IsInt, Min } from 'class-validator';
-import { MealType } from '../../../config/emuns/meal';
+import { IsDateString, IsNotEmpty, IsInt, Min } from 'class-validator';
 
 export class CreateMealDto {
   @IsDateString()
   date: string; // YYYY-MM-DD
-
-  @IsEnum(MealType)
-  mealType: MealType;
 
   @IsNotEmpty()
   name: string;

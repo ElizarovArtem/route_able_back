@@ -1,7 +1,6 @@
 import {
   Body,
   Controller,
-  Delete,
   Get,
   Param,
   Patch,
@@ -14,7 +13,7 @@ import {
 import { UserService } from './user.service';
 import { User } from '../../entities/user.entity';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { uploadAvatar } from './multer-s3.config';
+import { uploadAvatarOptions } from './multer-s3.config';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Request } from 'express';
 import { JwtAuthGuard } from 'src/libs/guards/auth.guard';
@@ -41,19 +40,14 @@ export class UserController {
   }
 
   @Patch()
-  // @UseInterceptors(FileInterceptor('avatar', uploadAvatar))
+  @UseInterceptors(FileInterceptor('avatar', uploadAvatarOptions))
   async updateProfile(
     @Body() dto: UpdateUserDto,
-    @UploadedFile() file: File & { location: string },
+    @UploadedFile() file: Express.Multer.File,
     @Req() req: Request,
   ) {
     const user = req.user as User;
-    const avatarUrl = file?.location; // публичная ссылка
+    const avatarUrl = file?.filename; // публичная ссылка
     return this.usersService.updateUser(user, dto, avatarUrl);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string): Promise<void> {
-    return this.usersService.remove(Number(id));
   }
 }

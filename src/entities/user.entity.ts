@@ -1,5 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { Day } from './day.entity';
+import { Roles } from '../config/emuns/user';
 
 @Entity('users')
 export class User {
@@ -10,10 +11,16 @@ export class User {
   name: string;
 
   @Column('text', { array: true })
-  roles: string[];
+  roles: Roles[];
 
   @Column()
   phone: string;
+
+  @Column({ nullable: true, unique: true })
+  email: string;
+
+  @Column({ nullable: true })
+  about: string;
 
   @OneToMany(() => Day, (day) => day.user, { onDelete: 'CASCADE' })
   days: Day[];

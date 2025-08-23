@@ -3,6 +3,7 @@ import { User } from '../../entities/user.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { Roles } from '../../config/emuns/user';
 
 @Injectable()
 export class UserService {
@@ -13,6 +14,7 @@ export class UserService {
 
   create(userData: Partial<User>): Promise<User> {
     const user = this.userRepository.create(userData);
+
     return this.userRepository.save(user);
   }
 
@@ -24,14 +26,28 @@ export class UserService {
     return this.userRepository.findOneBy({ phone });
   }
 
-  async updateUser(user: User, dto: UpdateUserDto, avatarUrl?: string) {
-    const updateData: Partial<User> = { ...dto };
-    if (avatarUrl) updateData.avatar = avatarUrl;
-    await this.userRepository.update({ id: user.id }, updateData);
-    return this.userRepository.findOne({ where: { id: user.id } });
-  }
+  async updateUser(
+    user: User,
+    { isCoach, ...dto }: UpdateUserDto,
+    avatarUrl?: string,
+  ) {
+    let updateData: Partial<User> = { ...dto, roles: user.roles };
 
-  async remove(id: number): Promise<void> {
-    await this.userRepository.delete(id);
+    if (avatarUrl) {
+      updateData = { ...updateData, avatar: avatarUrl };
+    }
+
+    if (isCoach) {
+      updateData = { ...updateData, roles: [...updateData.roles, Roles.Coach] };
+    } else {
+      updateData = {
+        ...updateData,
+        roles: updateData.roles.filter((role) => role !== Roles.Coach),
+      };
+    }
+
+    await this.userRepository.update({ id: user.id }, updateData);
+
+    return this.userRepository.findOne({ where: { id: user.id } });
   }
 }

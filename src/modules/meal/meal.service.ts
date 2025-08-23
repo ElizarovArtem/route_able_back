@@ -37,10 +37,10 @@ export class MealService {
 
     const summary = meals.reduce(
       (acc, meal) => {
-        acc.calories += meal.calories;
-        acc.protein += meal.protein;
-        acc.fat += meal.fat;
-        acc.carbs += meal.carbs;
+        acc.calories += Number(meal.calories);
+        acc.protein += Number(meal.protein);
+        acc.fat += Number(meal.fat);
+        acc.carbs += Number(meal.carbs);
         return acc;
       },
       { calories: 0, protein: 0, fat: 0, carbs: 0 },

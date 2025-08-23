@@ -8,6 +8,7 @@ import { Day } from '../../entities/day.entity';
 import { Meal } from '../../entities/meal.entity';
 import { MealModule } from '../meal/meal.module';
 import { DayModule } from '../day/day.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
@@ -20,6 +21,9 @@ import { DayModule } from '../day/day.module';
       database: 'route_able',
       entities: [User, AuthCodes, Day, Meal],
       synchronize: true, // Только для разработки
+    }),
+    ConfigModule.forRoot({
+      envFilePath: '.env',
     }),
     UserModule,
     AuthModule,
