@@ -26,6 +26,13 @@ export class UserService {
     return this.userRepository.findOneBy({ phone });
   }
 
+  getCoaches(): Promise<User[]> {
+    return this.userRepository
+      .createQueryBuilder('u')
+      .where(':role = ANY(u.roles)', { role: Roles.Coach })
+      .getMany();
+  }
+
   async updateUser(
     user: User,
     { isCoach, ...dto }: UpdateUserDto,
