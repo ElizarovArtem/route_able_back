@@ -9,6 +9,11 @@ import { Meal } from '../../entities/meal.entity';
 import { MealModule } from '../meal/meal.module';
 import { DayModule } from '../day/day.module';
 import { ConfigModule } from '@nestjs/config';
+import { ChatModule } from '../chat/chat.module';
+import { Chat } from '../../entities/chat.entity';
+import { ChatParticipant } from '../../entities/chat-participant.entity';
+import { Message } from '../../entities/message.entity';
+import { TraineeCoach } from '../../entities/trainee-coach.entity';
 
 @Module({
   imports: [
@@ -19,7 +24,16 @@ import { ConfigModule } from '@nestjs/config';
       username: 'postgres',
       password: 'patiy_parol97',
       database: 'route_able',
-      entities: [User, AuthCodes, Day, Meal],
+      entities: [
+        User,
+        AuthCodes,
+        Day,
+        Meal,
+        Chat,
+        ChatParticipant,
+        Message,
+        TraineeCoach,
+      ],
       synchronize: true, // Только для разработки
     }),
     ConfigModule.forRoot({
@@ -29,6 +43,7 @@ import { ConfigModule } from '@nestjs/config';
     AuthModule,
     MealModule,
     DayModule,
+    ChatModule,
   ],
   controllers: [],
   providers: [],

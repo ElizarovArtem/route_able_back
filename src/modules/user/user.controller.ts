@@ -36,9 +36,9 @@ export class UserController {
   }
 
   @Get('coaches')
-  @Public()
-  getCoaches(): Promise<User[]> {
-    return this.usersService.getCoaches();
+  getCoaches(@Req() req: Request): Promise<User[]> {
+    const user = req.user as User;
+    return this.usersService.getCoaches(user.id);
   }
 
   @Get(':phone')

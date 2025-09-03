@@ -26,10 +26,11 @@ export class UserService {
     return this.userRepository.findOneBy({ phone });
   }
 
-  getCoaches(): Promise<User[]> {
+  getCoaches(currentUserId?: string): Promise<User[]> {
     return this.userRepository
       .createQueryBuilder('u')
       .where(':role = ANY(u.roles)', { role: Roles.Coach })
+      .andWhere(':me <> u.id ', { me: currentUserId })
       .getMany();
   }
 
