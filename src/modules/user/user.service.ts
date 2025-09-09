@@ -26,6 +26,10 @@ export class UserService {
     return this.userRepository.findOneBy({ phone });
   }
 
+  getById(id: string): Promise<User | null> {
+    return this.userRepository.findOneBy({ id });
+  }
+
   getCoaches(currentUserId?: string): Promise<User[]> {
     return this.userRepository
       .createQueryBuilder('u')

@@ -17,7 +17,6 @@ import { uploadAvatarOptions } from './multer-s3.config';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Request } from 'express';
 import { JwtAuthGuard } from 'src/libs/guards/auth.guard';
-import { Public } from '../../config/decorators/public.decorator';
 // import { File } from 'multer-s3';
 
 @Controller('user')
@@ -44,6 +43,11 @@ export class UserController {
   @Get(':phone')
   findOne(@Param('phone') phone: string): Promise<User> {
     return this.usersService.findOne(phone);
+  }
+
+  @Get('byId/:id')
+  getById(@Param('id') id: string): Promise<User> {
+    return this.usersService.getById(id);
   }
 
   @Patch()

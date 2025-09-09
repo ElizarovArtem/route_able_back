@@ -1,6 +1,6 @@
 import { Injectable, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Chat } from '../../entities/chat.entity';
 import { ChatParticipant } from '../../entities/chat-participant.entity';
 import { Message } from '../../entities/message.entity';
@@ -23,16 +23,16 @@ export class ChatService {
     );
 
     let chat = await this.chatRepository.findOne({
-      where: { traineeCoachId: link.id },
+      where: { clientCoachId: link.id },
     });
     if (!chat) {
       chat = await this.chatRepository.save(
-        this.chatRepository.create({ traineeCoachId: link.id }),
+        this.chatRepository.create({ clientCoachId: link.id }),
       );
       await this.chatParticipantRepository.save([
         this.chatParticipantRepository.create({
           chatId: chat.id,
-          userId: link.traineeId,
+          userId: link.clientId,
         }),
         this.chatParticipantRepository.create({
           chatId: chat.id,
@@ -59,10 +59,10 @@ export class ChatService {
         { userId },
       )
       .innerJoin('users', 'u', 'u.id = other.userId')
-      .leftJoin('trainee_coach', 'tc', 'tc.id = c.traineeCoachId')
+      .leftJoin('client_coach', 'tc', 'tc.id = c.clientCoachId')
       .select([
         'c.id AS id',
-        'c.traineeCoachId AS "traineeCoachId"',
+        'c.clientCoachId AS "clientCoachId"',
         'u.id AS "partnerId"',
         'u.name AS "partnerName"',
         'u.avatar AS "partnerAvatar"',
@@ -72,7 +72,7 @@ export class ChatService {
     const rows = await qb.getRawMany();
     return rows.map((row) => ({
       id: row.id,
-      traineeCoachId: row.traineeCoachId,
+      clientCoachId: row.clientCoachId,
       partner: {
         id: row.partnerId,
         name: row.partnerName,

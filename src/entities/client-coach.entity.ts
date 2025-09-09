@@ -9,15 +9,15 @@ import {
 } from 'typeorm';
 import { User } from './user.entity';
 
-@Entity('trainee_coach')
-@Unique('uq_tc_pair', ['traineeId', 'coachId'])
-export class TraineeCoach {
+@Entity('client_coach')
+@Unique('uq_client_coach_pair', ['clientId', 'coachId'])
+export class ClientCoach {
   @PrimaryGeneratedColumn('uuid') id: string;
 
-  @Column('uuid') traineeId: string;
+  @Column('uuid') clientId: string;
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'traineeId', referencedColumnName: 'id' })
-  trainee: User;
+  @JoinColumn({ name: 'clientId', referencedColumnName: 'id' })
+  client: User;
 
   @Column('uuid') coachId: string;
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
@@ -25,4 +25,13 @@ export class TraineeCoach {
   coach: User;
 
   @CreateDateColumn() createdAt: Date;
+
+  @Column({ type: 'boolean', default: false })
+  isActive: boolean;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  activatedAt?: Date;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  deactivatedAt?: Date;
 }

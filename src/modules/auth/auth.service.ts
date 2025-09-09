@@ -45,7 +45,7 @@ export class AuthService {
     let user = await this.userService.findOne(phone);
 
     if (!user) {
-      user = await this.userService.create({ phone, roles: [Roles.Trainee] });
+      user = await this.userService.create({ phone, roles: [Roles.Client] });
     }
 
     const payload = {

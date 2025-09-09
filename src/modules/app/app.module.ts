@@ -13,7 +13,8 @@ import { ChatModule } from '../chat/chat.module';
 import { Chat } from '../../entities/chat.entity';
 import { ChatParticipant } from '../../entities/chat-participant.entity';
 import { Message } from '../../entities/message.entity';
-import { TraineeCoach } from '../../entities/trainee-coach.entity';
+import { ClientCoach } from '../../entities/client-coach.entity';
+import { RelationsModule } from '../relations/relations.module';
 
 @Module({
   imports: [
@@ -32,7 +33,7 @@ import { TraineeCoach } from '../../entities/trainee-coach.entity';
         Chat,
         ChatParticipant,
         Message,
-        TraineeCoach,
+        ClientCoach,
       ],
       synchronize: true, // Только для разработки
     }),
@@ -44,6 +45,7 @@ import { TraineeCoach } from '../../entities/trainee-coach.entity';
     MealModule,
     DayModule,
     ChatModule,
+    RelationsModule,
   ],
   controllers: [],
   providers: [],
