@@ -5,12 +5,15 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { ClientCoach } from '../../entities/client-coach.entity';
 import { User } from '../../entities/user.entity';
 import { Roles } from '../../config/emuns/user';
-import { RelationView } from './dto/relations-view.dto';
 import { Chat } from '../../entities/chat.entity';
+import {
+  MyRelationsItem,
+  RelationView,
+} from '../../config/interfaces/relations';
 
 @Injectable()
 export class RelationsService {
@@ -47,17 +50,20 @@ export class RelationsService {
   // ⚡️ «оплата прошла» (пока мок): включаем активность
   async activateLink(linkId: string, byUserId: string) {
     const link = await this.links.findOne({ where: { id: linkId } });
+
     if (!link) throw new NotFoundException('Связь не найдена');
 
     // Право кто может активировать: клиент, тренер или биллинг-хук.
     if (byUserId !== link.clientId && byUserId !== link.coachId) {
       throw new ForbiddenException('Нет прав на активацию');
     }
+
     if (link.isActive) return link;
 
     link.isActive = true;
     link.activatedAt = new Date();
     link.deactivatedAt = null;
+
     return this.links.save(link);
   }
 
@@ -134,5 +140,45 @@ export class RelationsService {
       billing,
       booking,
     } as RelationView;
+  }
+
+  async getMyInteractions(meId: string): Promise<MyRelationsItem[]> {
+    const relations = await this.links.find({
+      where: [{ clientId: meId }, { coachId: meId }],
+    });
+    if (!relations.length) return [];
+
+    const linkIds = relations.map((relation) => relation.id);
+    const chats = await this.chats.find({
+      where: { clientCoachId: In(linkIds) },
+    });
+    const chatByLinkId = new Map(
+      chats.map((chat) => [chat.clientCoachId, chat]),
+    );
+
+    const partnerIds = relations.map((relation) =>
+      relation.clientId === meId ? relation.coachId : relation.clientId,
+    );
+    const partners = await this.users.find({ where: { id: In(partnerIds) } });
+    const partnerById = new Map(partners.map((user) => [user.id, user]));
+
+    return relations.map((relation) => {
+      const amClient = relation.clientId === meId;
+      const partnerId = amClient ? relation.coachId : relation.clientId;
+      const partner = partnerById.get(partnerId);
+
+      return {
+        myRole: amClient ? Roles.Client : Roles.Coach,
+        partnerRole: amClient ? Roles.Coach : Roles.Client,
+        chatId: chatByLinkId.get(relation.id)?.id,
+        clientCoachId: relation.id,
+        partner: {
+          id: partner.id,
+          name: partner.name,
+          avatar: partner.avatar ?? null,
+        },
+        isActive: !!relation.isActive,
+      };
+    });
   }
 }

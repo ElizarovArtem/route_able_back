@@ -1,3 +1,14 @@
+import { Roles } from '../emuns/user';
+
+export type MyRelationsItem = {
+  myRole: Roles;
+  partnerRole: Roles;
+  chatId: string;
+  clientCoachId: string;
+  partner: { id: string; name: string; avatarUrl?: string | null };
+  isActive?: boolean;
+};
+
 export type RelationView = {
   meRole: 'CLIENT' | 'COACH' | 'NONE'; // кем я являюсь в паре (или пока не в паре)
   partner: { id: string; name: string; avatarUrl?: string | null };

@@ -49,7 +49,7 @@ export class UserService {
       updateData = { ...updateData, avatar: avatarUrl };
     }
 
-    if (isCoach) {
+    if (isCoach === 'true' && !user.roles.includes(Roles.Coach)) {
       updateData = { ...updateData, roles: [...updateData.roles, Roles.Coach] };
     } else {
       updateData = {
