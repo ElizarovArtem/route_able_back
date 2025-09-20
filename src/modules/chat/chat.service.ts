@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { Chat } from '../../entities/chat.entity';
 import { ChatParticipant } from '../../entities/chat-participant.entity';
 import { Message } from '../../entities/message.entity';
-import { RelationsService } from '../relations/relations.service';
+import { ClientCoachService } from '../clientCoach/clientCoach.service';
 
 @Injectable()
 export class ChatService {
@@ -13,7 +13,7 @@ export class ChatService {
     @InjectRepository(ChatParticipant)
     private chatParticipantRepository: Repository<ChatParticipant>,
     @InjectRepository(Message) private messageRepository: Repository<Message>,
-    private readonly relations: RelationsService,
+    private readonly relations: ClientCoachService,
   ) {}
 
   async startChat(initiatorId: string, otherUserId: string) {

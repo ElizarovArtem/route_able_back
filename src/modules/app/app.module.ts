@@ -14,7 +14,9 @@ import { Chat } from '../../entities/chat.entity';
 import { ChatParticipant } from '../../entities/chat-participant.entity';
 import { Message } from '../../entities/message.entity';
 import { ClientCoach } from '../../entities/client-coach.entity';
-import { RelationsModule } from '../relations/relations.module';
+import { ClientCoachModule } from '../clientCoach/clientCoach.module';
+import { PlannedMealsModule } from '../plannedMeals/plannedMeals.module';
+import { PlannedMeal } from '../../entities/planned-meal.entity';
 
 @Module({
   imports: [
@@ -34,6 +36,7 @@ import { RelationsModule } from '../relations/relations.module';
         ChatParticipant,
         Message,
         ClientCoach,
+        PlannedMeal,
       ],
       synchronize: true, // Только для разработки
     }),
@@ -45,7 +48,8 @@ import { RelationsModule } from '../relations/relations.module';
     MealModule,
     DayModule,
     ChatModule,
-    RelationsModule,
+    ClientCoachModule,
+    PlannedMealsModule,
   ],
   controllers: [],
   providers: [],

@@ -16,12 +16,38 @@ import {
 } from '../../config/interfaces/relations';
 
 @Injectable()
-export class RelationsService {
+export class ClientCoachService {
   constructor(
     @InjectRepository(ClientCoach) private links: Repository<ClientCoach>,
     @InjectRepository(Chat) private chats: Repository<Chat>,
     @InjectRepository(User) private users: Repository<User>,
   ) {}
+
+  // принадлежность по relationId
+  async requireMembershipByRelationId(meId: string, relationId: string) {
+    const link = await this.links.findOne({ where: { id: relationId } });
+    if (!link) throw new NotFoundException('Связь не найдена');
+    if (meId !== link.clientId && meId !== link.coachId) {
+      // privacy-friendly: не палим существование чужой связи
+      throw new NotFoundException('Связь не найдена');
+    }
+    return link;
+  }
+
+  // то же + активность
+  async requireActiveByRelationId(meId: string, relationId: string) {
+    const link = await this.requireMembershipByRelationId(meId, relationId);
+    if (!link.isActive) throw new ForbiddenException('Связь не активна');
+    return link;
+  }
+
+  // по паре id (когда направление известно и membership уже проверили выше/или это внутренняя логика)
+  async requireActiveByPair(clientId: string, coachId: string) {
+    const link = await this.links.findOne({ where: { clientId, coachId } });
+    if (!link) throw new NotFoundException('Связь не найдена');
+    if (!link.isActive) throw new ForbiddenException('Связь не активна');
+    return link;
+  }
 
   /**
    * Инициатор = Trainee, второй пользователь обязан быть Coach.
@@ -78,14 +104,6 @@ export class RelationsService {
     link.isActive = false;
     link.deactivatedAt = new Date();
     return this.links.save(link);
-  }
-
-  // Хелпер: требуем активную связь — пригодится для бронирования/планов
-  async requireActive(clientId: string, coachId: string) {
-    const link = await this.links.findOne({ where: { clientId, coachId } });
-    if (!link || !link.isActive)
-      throw new ForbiddenException('Связь не активна');
-    return link;
   }
 
   // Получить "вид" по partnerId (универсально для ClientPage и CoachPage)
@@ -180,5 +198,49 @@ export class RelationsService {
         isActive: !!relation.isActive,
       };
     });
+  }
+
+  // только тренер может задавать/обновлять цели
+  async upsertGoals(
+    meId: string,
+    relationId: string,
+    dto: Partial<ClientCoach>,
+  ) {
+    const link = await this.requireMembershipByRelationId(meId, relationId);
+
+    if (meId !== link.coachId) {
+      throw new ForbiddenException('Только тренер может задавать цели');
+    }
+
+    link.goalCalories = dto.goalCalories ?? link.goalCalories ?? null;
+    link.goalProtein = dto.goalProtein ?? link.goalProtein ?? null;
+    link.goalFat = dto.goalFat ?? link.goalFat ?? null;
+    link.goalCarbs = dto.goalCarbs ?? link.goalCarbs ?? null;
+
+    await this.links.save(link);
+
+    return {
+      relationId: link.id,
+      goals: {
+        goalCalories: link.goalCalories,
+        goalProtein: link.goalProtein,
+        goalFat: link.goalFat,
+        goalCarbs: link.goalCarbs,
+      },
+    };
+  }
+
+  // получить цели — доступно обоим участникам
+  async getGoals(meId: string, relationId: string) {
+    const link = await this.requireMembershipByRelationId(meId, relationId);
+    return {
+      relationId: link.id,
+      goals: {
+        goalCalories: link.goalCalories ?? null,
+        goalProtein: link.goalProtein ?? null,
+        goalFat: link.goalFat ?? null,
+        goalCarbs: link.goalCarbs ?? null,
+      },
+    };
   }
 }

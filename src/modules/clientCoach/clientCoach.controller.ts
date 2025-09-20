@@ -1,11 +1,20 @@
-import { Controller, Patch, Param, UseGuards, Req, Get } from '@nestjs/common';
-import { RelationsService } from './relations.service';
+import {
+  Controller,
+  Patch,
+  Param,
+  UseGuards,
+  Req,
+  Get,
+  Body,
+} from '@nestjs/common';
+import { ClientCoachService } from './clientCoach.service';
 import { JwtAuthGuard } from '../../libs/guards/auth.guard';
+import { UpsertGoalsDto } from './dto/set-goals.dto';
 
-@Controller('relations')
+@Controller('client-coach')
 @UseGuards(JwtAuthGuard)
-export class RelationsController {
-  constructor(private readonly relationsService: RelationsService) {}
+export class ClientCoachController {
+  constructor(private readonly relationsService: ClientCoachService) {}
 
   @Get('with/:partnerId')
   getWithPartner(@Req() req, @Param('partnerId') partnerId: string) {
@@ -27,5 +36,19 @@ export class RelationsController {
   @Patch(':id/deactivate')
   deactivate(@Req() req, @Param('id') id: string) {
     return this.relationsService.deactivateLink(id, req.user.id);
+  }
+
+  @Get(':relationId/nutrition-goals')
+  getGoals(@Req() req, @Param('relationId') relationId: string) {
+    return this.relationsService.getGoals(req.user.id, relationId);
+  }
+
+  @Patch(':relationId/nutrition-goals')
+  upsertGoals(
+    @Req() req,
+    @Param('relationId') relationId: string,
+    @Body() dto: UpsertGoalsDto,
+  ) {
+    return this.relationsService.upsertGoals(req.user.id, relationId, dto);
   }
 }

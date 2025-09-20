@@ -2,14 +2,14 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ClientCoach } from '../../entities/client-coach.entity';
 import { User } from '../../entities/user.entity';
-import { RelationsService } from './relations.service';
-import { RelationsController } from './relations.controller';
+import { ClientCoachService } from './clientCoach.service';
+import { ClientCoachController } from './clientCoach.controller';
 import { Chat } from '../../entities/chat.entity';
 
 @Module({
   imports: [TypeOrmModule.forFeature([ClientCoach, User, Chat])],
-  controllers: [RelationsController],
-  providers: [RelationsService],
-  exports: [RelationsService],
+  controllers: [ClientCoachController],
+  providers: [ClientCoachService],
+  exports: [ClientCoachService],
 })
-export class RelationsModule {}
+export class ClientCoachModule {}

@@ -7,7 +7,7 @@ import { ClientCoach } from '../../entities/client-coach.entity';
 import { User } from '../../entities/user.entity'; // ⬅️ путь
 import { ChatService } from './chat.service';
 import { ChatController } from './chat.controller';
-import { RelationsService } from '../relations/relations.service';
+import { ClientCoachService } from '../clientCoach/clientCoach.service';
 
 @Module({
   imports: [
@@ -20,7 +20,7 @@ import { RelationsService } from '../relations/relations.service';
     ]),
   ],
   controllers: [ChatController],
-  providers: [ChatService, RelationsService],
+  providers: [ChatService, ClientCoachService],
   exports: [ChatService],
 })
 export class ChatModule {}

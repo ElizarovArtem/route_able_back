@@ -34,4 +34,16 @@ export class ClientCoach {
 
   @Column({ type: 'timestamptz', nullable: true })
   deactivatedAt?: Date;
+
+  @Column('int', { nullable: true })
+  goalCalories?: number | null;
+
+  @Column('int', { nullable: true })
+  goalProtein?: number | null;
+
+  @Column('int', { nullable: true })
+  goalFat?: number | null;
+
+  @Column('int', { nullable: true })
+  goalCarbs?: number | null;
 }
