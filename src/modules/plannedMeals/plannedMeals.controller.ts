@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Post,
@@ -34,5 +35,23 @@ export class PlannedMealsController {
     @Query() q: PlannedMealsListDto,
   ) {
     return this.svc.listForDate(req.user.id, relationId, q.date);
+  }
+
+  @Post(':plannedMealId/consume')
+  consume(
+    @Req() req,
+    @Param('relationId') relationId: string,
+    @Param('plannedMealId') plannedMealId: string,
+  ) {
+    return this.svc.consume(req.user.id, relationId, plannedMealId);
+  }
+
+  @Delete(':plannedMealId')
+  remove(
+    @Req() req,
+    @Param('relationId') relationId: string,
+    @Param('plannedMealId') plannedMealId: string,
+  ) {
+    return this.svc.remove(req.user.id, relationId, plannedMealId);
   }
 }

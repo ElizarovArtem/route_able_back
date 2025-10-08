@@ -139,7 +139,7 @@ export class ClientCoachService {
     const booking = { next: null } as RelationView['booking'];
 
     return {
-      meRole: link.clientId === meId ? 'CLIENT' : 'COACH',
+      meRole: link.clientId === meId ? Roles.Client : Roles.Coach,
       partner: {
         id: partner.id,
         name: partner.name,

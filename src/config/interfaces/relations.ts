@@ -10,7 +10,7 @@ export type MyRelationsItem = {
 };
 
 export type RelationView = {
-  meRole: 'CLIENT' | 'COACH' | 'NONE'; // кем я являюсь в паре (или пока не в паре)
+  meRole: Roles; // кем я являюсь в паре (или пока не в паре)
   partner: { id: string; name: string; avatarUrl?: string | null };
   relation: {
     id: string;

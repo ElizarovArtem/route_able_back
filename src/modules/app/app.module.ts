@@ -17,6 +17,9 @@ import { ClientCoach } from '../../entities/client-coach.entity';
 import { ClientCoachModule } from '../clientCoach/clientCoach.module';
 import { PlannedMealsModule } from '../plannedMeals/plannedMeals.module';
 import { PlannedMeal } from '../../entities/planned-meal.entity';
+import { PlannedExercisesModule } from '../plannedExercises/plannedExercises.module';
+import { PlannedExercise } from '../../entities/planned-exercise.entity';
+import { ExerciseLog } from '../../entities/exercise-log.entity';
 
 @Module({
   imports: [
@@ -37,6 +40,8 @@ import { PlannedMeal } from '../../entities/planned-meal.entity';
         Message,
         ClientCoach,
         PlannedMeal,
+        PlannedExercise,
+        ExerciseLog,
       ],
       synchronize: true, // Только для разработки
     }),
@@ -50,6 +55,7 @@ import { PlannedMeal } from '../../entities/planned-meal.entity';
     ChatModule,
     ClientCoachModule,
     PlannedMealsModule,
+    PlannedExercisesModule,
   ],
   controllers: [],
   providers: [],

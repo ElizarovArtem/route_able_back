@@ -17,39 +17,34 @@ export class MealService {
   async addMeal(dto: CreateMealDto, user: User): Promise<Meal> {
     const { date, ...mealData } = dto;
     const day = await this.dayService.getOrCreateDay(user, date);
-    const meal = this.mealRepo.create({ ...mealData, day });
+    const meal = this.mealRepo.create({
+      ...mealData,
+      day,
+      clientCoachId: day.clientCoachId ?? null,
+    });
     return this.mealRepo.save(meal);
   }
 
   async getMealsSummaryForDay(date: string, user: User) {
-    const meals = await this.mealRepo.find({
-      where: {
-        day: {
-          date,
-          user: { id: user.id },
-        },
-      },
-      relations: ['day'],
-      order: {
-        createdAt: 'ASC',
-      },
-    });
+    const qb = this.mealRepo
+      .createQueryBuilder('m')
+      .innerJoin('m.day', 'd')
+      .where('d.userId = :uid AND d.date = :date', { uid: user.id, date })
+      .orderBy('m.createdAt', 'ASC');
+
+    const meals = await qb.getMany();
 
     const summary = meals.reduce(
-      (acc, meal) => {
-        acc.calories += Number(meal.calories);
-        acc.protein += Number(meal.protein);
-        acc.fat += Number(meal.fat);
-        acc.carbs += Number(meal.carbs);
+      (acc, m) => {
+        acc.calories += Number(m.calories);
+        acc.protein += Number(m.protein);
+        acc.fat += Number(m.fat);
+        acc.carbs += Number(m.carbs);
         return acc;
       },
       { calories: 0, protein: 0, fat: 0, carbs: 0 },
     );
 
-    return {
-      date,
-      summary,
-      meals,
-    };
+    return { date, summary, meals };
   }
 }
