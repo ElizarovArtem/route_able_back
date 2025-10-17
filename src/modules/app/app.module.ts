@@ -20,6 +20,7 @@ import { PlannedMeal } from '../../entities/planned-meal.entity';
 import { PlannedExercisesModule } from '../plannedExercises/plannedExercises.module';
 import { PlannedExercise } from '../../entities/planned-exercise.entity';
 import { ExerciseLog } from '../../entities/exercise-log.entity';
+import { VideoChatModule } from '../videoChat/video-chat.module';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { ExerciseLog } from '../../entities/exercise-log.entity';
     ClientCoachModule,
     PlannedMealsModule,
     PlannedExercisesModule,
+    VideoChatModule,
   ],
   controllers: [],
   providers: [],
