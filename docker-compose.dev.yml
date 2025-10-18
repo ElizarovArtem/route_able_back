@@ -1,0 +1,11 @@
+version: '3.8'
+services:
+  livekit:
+    image: livekit/livekit-server:latest
+    command: >
+      --dev            # dev-режим: даёт devkey/secret, не нужен config.yml
+      --bind 0.0.0.0
+    ports:
+      - "7880:7880"    # HTTP/WebSocket API
+      - "7881:7881"    # RTC TCP (fallback)
+      - "7882:7882/udp"# RTP/RTCP UDP (медиа)
