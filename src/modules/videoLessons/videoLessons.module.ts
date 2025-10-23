@@ -7,7 +7,10 @@ import { VideoLessonsController } from './videoLessons.controller';
 import { ClientCoachModule } from '../clientCoach/clientCoach.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([VideoLesson, ClientCoach]), ClientCoachModule],
+  imports: [
+    TypeOrmModule.forFeature([VideoLesson, ClientCoach]),
+    ClientCoachModule,
+  ],
   controllers: [VideoLessonsController],
   providers: [VideoLessonsService],
   exports: [VideoLessonsService],

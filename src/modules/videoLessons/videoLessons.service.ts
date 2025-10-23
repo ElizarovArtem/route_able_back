@@ -3,22 +3,59 @@ import {
   BadRequestException,
   ForbiddenException,
   NotFoundException,
+  Logger,
+  OnModuleInit,
+  OnModuleDestroy,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Not, Raw } from 'typeorm';
+import { Repository, Not, Raw, Between } from 'typeorm';
 import { VideoLesson, LessonStatus } from '../../entities/video-lesson.entity';
 import { ClientCoachService } from '../clientCoach/clientCoach.service';
 
 @Injectable()
-export class VideoLessonsService {
+export class VideoLessonsService implements OnModuleInit, OnModuleDestroy {
   private earlyJoinMin = 5;
   private lateJoinMin = 10;
+  private readonly statusSyncIntervalMs = 60_000;
+  private readonly statusSyncLookbackMs = 6 * 60 * 60_000; // 6 hours
+  private readonly logger = new Logger(VideoLessonsService.name);
+  private statusSyncTimer: NodeJS.Timeout | null = null;
+  private statusSyncRunning = false;
 
   constructor(
     @InjectRepository(VideoLesson)
     private readonly lessons: Repository<VideoLesson>,
     private readonly cc: ClientCoachService,
   ) {}
+
+  onModuleInit() {
+    this.statusSyncTimer = setInterval(() => {
+      void this.runStatusSync();
+    }, this.statusSyncIntervalMs);
+    void this.runStatusSync();
+  }
+
+  onModuleDestroy() {
+    if (this.statusSyncTimer) {
+      clearInterval(this.statusSyncTimer);
+      this.statusSyncTimer = null;
+    }
+  }
+
+  private async runStatusSync() {
+    if (this.statusSyncRunning) return;
+    this.statusSyncRunning = true;
+    try {
+      await this.syncStatuses();
+    } catch (err) {
+      this.logger.error(
+        'Failed to sync video lesson statuses',
+        err instanceof Error ? err.stack : String(err),
+      );
+    } finally {
+      this.statusSyncRunning = false;
+    }
+  }
 
   private toDate(s: string) {
     const d = new Date(s);
@@ -128,7 +165,10 @@ export class VideoLessonsService {
     const prevStatus = lesson.status;
     if (lesson.status === LessonStatus.SCHEDULED && now >= lesson.startAt) {
       lesson.status = LessonStatus.IN_PROGRESS;
-    } else if (lesson.status === LessonStatus.IN_PROGRESS && now >= lesson.endAt) {
+    } else if (
+      lesson.status === LessonStatus.IN_PROGRESS &&
+      now >= lesson.endAt
+    ) {
       lesson.status = LessonStatus.COMPLETED;
     }
 
@@ -137,5 +177,39 @@ export class VideoLessonsService {
     }
 
     return lesson;
+  }
+
+  async syncStatuses(now = new Date()) {
+    const windowStart = new Date(now.getTime() - this.statusSyncLookbackMs);
+
+    const scheduledToStart = await this.lessons.find({
+      where: {
+        status: LessonStatus.SCHEDULED,
+        startAt: Between(windowStart, now),
+      },
+    });
+
+    const inProgressToFinish = await this.lessons.find({
+      where: {
+        status: LessonStatus.IN_PROGRESS,
+        endAt: Between(windowStart, now),
+      },
+    });
+
+    const updates: VideoLesson[] = [];
+    for (const lesson of scheduledToStart) {
+      lesson.status = LessonStatus.IN_PROGRESS;
+      updates.push(lesson);
+    }
+    for (const lesson of inProgressToFinish) {
+      lesson.status = LessonStatus.COMPLETED;
+      updates.push(lesson);
+    }
+
+    if (updates.length > 0) {
+      await this.lessons.save(updates);
+    }
+
+    return updates;
   }
 }
