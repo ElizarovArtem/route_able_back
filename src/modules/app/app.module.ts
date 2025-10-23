@@ -20,7 +20,9 @@ import { PlannedMeal } from '../../entities/planned-meal.entity';
 import { PlannedExercisesModule } from '../plannedExercises/plannedExercises.module';
 import { PlannedExercise } from '../../entities/planned-exercise.entity';
 import { ExerciseLog } from '../../entities/exercise-log.entity';
-import { VideoChatModule } from '../videoChat/video-chat.module';
+import { VideoLessonsModule } from '../videoLessons/videoLessons.module';
+import { VideoModule } from '../video/video.module';
+import { VideoLesson } from '../../entities/video-lesson.entity';
 
 @Module({
   imports: [
@@ -43,11 +45,13 @@ import { VideoChatModule } from '../videoChat/video-chat.module';
         PlannedMeal,
         PlannedExercise,
         ExerciseLog,
+        VideoLesson,
       ],
       synchronize: true, // Только для разработки
     }),
     ConfigModule.forRoot({
       envFilePath: '.env',
+      isGlobal: true,
     }),
     UserModule,
     AuthModule,
@@ -57,7 +61,8 @@ import { VideoChatModule } from '../videoChat/video-chat.module';
     ClientCoachModule,
     PlannedMealsModule,
     PlannedExercisesModule,
-    VideoChatModule,
+    VideoLessonsModule,
+    VideoModule,
   ],
   controllers: [],
   providers: [],

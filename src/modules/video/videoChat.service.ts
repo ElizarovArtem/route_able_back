@@ -1,11 +1,14 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AccessToken } from 'livekit-server-sdk';
 import { ClientCoachService } from '../clientCoach/clientCoach.service';
+import { VideoLessonsService } from '../videoLessons/videoLessons.service';
 
-type GetTokenOpts = {
-  requireActive?: boolean; // если true — пускаем только по активной связи
-};
+type GetTokenOpts = { requireActive?: boolean };
 
 @Injectable()
 export class VideoChatService {
@@ -16,24 +19,19 @@ export class VideoChatService {
   constructor(
     private readonly config: ConfigService,
     private readonly clientCoach: ClientCoachService,
+    private readonly lessons: VideoLessonsService,
   ) {
     this.apiKey = this.config.get<string>('LK_API_KEY', '');
     this.apiSecret = this.config.get<string>('LK_API_SECRET', '');
     this.wsUrl = this.config.get<string>('LK_WS_URL', '');
     if (!this.apiKey || !this.apiSecret || !this.wsUrl) {
-      // Лучше fail-fast, чтобы не ловить загадочные ошибки позже
-      // Можно заменить на Logger.warn, если хочешь мягче
       throw new Error(
         'LiveKit config is missing: LK_API_KEY / LK_API_SECRET / LK_WS_URL',
       );
     }
   }
 
-  /**
-   * Выдаёт токен для комнаты = relationId. Проверяет, что пользователь — участник связи.
-   * Если requireActive=true, дополнительно проверяет активность.
-   */
-  async getJoinToken(
+  async getLessonJoinToken(
     user: { id: string; name?: string | null },
     relationId: string,
     opts: GetTokenOpts = {},
@@ -47,23 +45,34 @@ export class VideoChatService {
           relationId,
         );
 
+    const { lesson } = await this.lessons.canJoin(user.id, relationId);
+    if (!lesson) {
+      throw new ForbiddenException(
+        'Доступ к видеочату разрешён только в окно урока',
+      );
+    }
+
+    const roomName = lesson.id;
     const meRole = user.id === link.coachId ? 'coach' : 'client';
 
     const at = new AccessToken(this.apiKey, this.apiSecret, {
-      identity: user.id, // уникально в комнате
-      name: user.name ?? meRole, // красивое имя
-      // ttl: 60 * 15,                  // можно задать срок жизни (сек)
+      identity: user.id,
+      name: user.name ?? meRole,
     });
-
     at.addGrant({
-      room: relationId, // имя комнаты = relationId
       roomJoin: true,
+      room: roomName,
       canPublish: true,
       canSubscribe: true,
       canPublishData: true,
     });
 
-    const token = await at.toJwt();
-    return { token, url: this.wsUrl, room: relationId, meRole };
+    return {
+      token: await at.toJwt(),
+      url: this.wsUrl,
+      room: roomName,
+      meRole,
+      lessonId: lesson.id,
+    };
   }
 }
