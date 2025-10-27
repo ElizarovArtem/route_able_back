@@ -4,7 +4,7 @@ import {
   IsString,
   Length,
   IsEnum,
-  IsInt,
+  IsNumber,
   Min,
 } from 'class-validator';
 
@@ -13,19 +13,31 @@ export class CreatePlannedMealDto {
   @Length(1, 4000)
   text: string;
 
-  @IsInt()
+  @IsNumber(
+    { allowNaN: false, allowInfinity: false },
+    { message: 'calories must be a number' },
+  )
   @Min(0)
   calories: number;
 
-  @IsInt()
+  @IsNumber(
+    { allowNaN: false, allowInfinity: false },
+    { message: 'protein must be a number' },
+  )
   @Min(0)
   protein: number;
 
-  @IsInt()
+  @IsNumber(
+    { allowNaN: false, allowInfinity: false },
+    { message: 'fat must be a number' },
+  )
   @Min(0)
   fat: number;
 
-  @IsInt()
+  @IsNumber(
+    { allowNaN: false, allowInfinity: false },
+    { message: 'carbs must be a number' },
+  )
   @Min(0)
   carbs: number;
 

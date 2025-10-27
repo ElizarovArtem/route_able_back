@@ -41,16 +41,16 @@ export class PlannedMeal {
   @Column('text')
   text: string;
 
-  @Column('int', { nullable: true })
+  @Column({ type: 'numeric', precision: 10, scale: 2, nullable: true })
   calories?: number | null;
 
-  @Column('int', { nullable: true })
+  @Column({ type: 'numeric', precision: 10, scale: 2, nullable: true })
   protein?: number | null;
 
-  @Column('int', { nullable: true })
+  @Column({ type: 'numeric', precision: 10, scale: 2, nullable: true })
   fat?: number | null;
 
-  @Column('int', { nullable: true })
+  @Column({ type: 'numeric', precision: 10, scale: 2, nullable: true })
   carbs?: number | null;
 
   @Column({ type: 'boolean', default: false })
