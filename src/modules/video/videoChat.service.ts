@@ -75,4 +75,34 @@ export class VideoChatService {
       lessonId: lesson.id,
     };
   }
+
+  async getAdhocRoomToken(
+    user: { id: string; name?: string | null },
+    roomId: string,
+  ) {
+    const room = roomId?.trim();
+    if (!room) throw new BadRequestException('roomId is required');
+
+    const displayName = user.name ?? 'participant';
+    const meRole = 'participant';
+
+    const at = new AccessToken(this.apiKey, this.apiSecret, {
+      identity: user.id,
+      name: displayName,
+    });
+    at.addGrant({
+      roomJoin: true,
+      room,
+      canPublish: true,
+      canSubscribe: true,
+      canPublishData: true,
+    });
+
+    return {
+      token: await at.toJwt(),
+      url: this.wsUrl,
+      room,
+      meRole,
+    };
+  }
 }

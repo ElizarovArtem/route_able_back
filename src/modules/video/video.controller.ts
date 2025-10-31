@@ -13,4 +13,9 @@ export class VideoController {
       requireActive: true,
     });
   }
+
+  @Get('assistant-token')
+  getAssistantToken(@Req() req, @Query('roomId') roomId: string) {
+    return this.video.getAdhocRoomToken(req.user, roomId);
+  }
 }
