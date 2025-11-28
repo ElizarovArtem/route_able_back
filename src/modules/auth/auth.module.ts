@@ -9,10 +9,13 @@ import { UserService } from '../user/user.service';
 import { User } from '../../entities/user.entity';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from '../../libs/guards/auth.guard';
+import { MailService } from './auth.email.service';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
     PassportModule,
+    ConfigModule,
     TypeOrmModule.forFeature([AuthCodes, User]),
     JwtModule.register({
       secret: 'jwt-secret-key', // вынеси в ENV!
@@ -20,6 +23,6 @@ import { JwtStrategy } from '../../libs/guards/auth.guard';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, SmsService, UserService, JwtStrategy],
+  providers: [AuthService, SmsService, UserService, JwtStrategy, MailService],
 })
 export class AuthModule {}

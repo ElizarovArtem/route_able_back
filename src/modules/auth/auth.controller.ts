@@ -11,6 +11,7 @@ import { Response, Request } from 'express';
 import { AuthService } from './auth.service';
 import { VerifyCodeDto } from './dto/verify-code.dto';
 import { RequestCodeDto } from './dto/request-code.dto';
+import { RequestEmailCodeDto } from './dto/request-code-by-email.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -21,6 +22,11 @@ export class AuthController {
     return this.authService.requestCode(dto.phone);
   }
 
+  @Post('request-code-email')
+  requestCodeByEmail(@Body() dto: RequestEmailCodeDto) {
+    return this.authService.requestEmailCode(dto.email);
+  }
+
   @Post('login')
   async verifyCode(
     @Body() dto: VerifyCodeDto,
@@ -28,6 +34,35 @@ export class AuthController {
   ) {
     const { token, refreshToken, user } = await this.authService.login(
       dto.phone,
+      dto.code,
+    );
+
+    res.cookie('ra_auth_token', token, {
+      httpOnly: true,
+      expires: new Date(Date.now() + 1209600000),
+      sameSite: 'lax',
+      secure: false,
+      domain: 'localhost',
+      maxAge: 15 * 60 * 1000,
+    });
+
+    res.cookie('ra_refresh_token', refreshToken, {
+      httpOnly: true,
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 дней
+      sameSite: 'lax',
+      secure: false,
+    });
+
+    return { user };
+  }
+
+  @Post('login-by-email')
+  async verifyCodeByEmail(
+    @Body() dto: VerifyCodeDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const { token, refreshToken, user } = await this.authService.loginByEmail(
+      dto.email,
       dto.code,
     );
 

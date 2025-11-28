@@ -13,7 +13,7 @@ export class User {
   @Column('text', { array: true })
   roles: Roles[];
 
-  @Column()
+  @Column({ nullable: true, unique: true })
   phone: string;
 
   @Column({ nullable: true, unique: true })
