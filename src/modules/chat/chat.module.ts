@@ -4,7 +4,7 @@ import { Chat } from '../../entities/chat.entity';
 import { ChatParticipant } from '../../entities/chat-participant.entity';
 import { Message } from '../../entities/message.entity';
 import { ClientCoach } from '../../entities/client-coach.entity';
-import { User } from '../../entities/user.entity'; // ⬅️ путь
+import { User } from '../../entities/user.entity';
 import { ChatService } from './chat.service';
 import { ChatController } from './chat.controller';
 import { ClientCoachService } from '../clientCoach/clientCoach.service';

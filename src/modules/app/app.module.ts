@@ -8,7 +8,7 @@ import { Day } from '../../entities/day.entity';
 import { Meal } from '../../entities/meal.entity';
 import { MealModule } from '../meal/meal.module';
 import { DayModule } from '../day/day.module';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ChatModule } from '../chat/chat.module';
 import { Chat } from '../../entities/chat.entity';
 import { ChatParticipant } from '../../entities/chat-participant.entity';
@@ -26,33 +26,38 @@ import { VideoLesson } from '../../entities/video-lesson.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: 'localhost',
-      port: 5432,
-      username: 'postgres',
-      password: 'patiy_parol97',
-      database: 'route_able',
-      entities: [
-        User,
-        AuthCodes,
-        Day,
-        Meal,
-        Chat,
-        ChatParticipant,
-        Message,
-        ClientCoach,
-        PlannedMeal,
-        PlannedExercise,
-        ExerciseLog,
-        VideoLesson,
-      ],
-      synchronize: true, // Только для разработки
-    }),
     ConfigModule.forRoot({
       envFilePath: '.env',
       isGlobal: true,
     }),
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        type: 'postgres',
+        host: config.get('DB_HOST'),
+        port: config.get('DB_PORT'),
+        username: config.get('DB_USERNAME'),
+        password: config.get('DB_PASSWORD'),
+        database: config.get('DB_NAME'),
+        entities: [
+          User,
+          AuthCodes,
+          Day,
+          Meal,
+          Chat,
+          ChatParticipant,
+          Message,
+          ClientCoach,
+          PlannedMeal,
+          PlannedExercise,
+          ExerciseLog,
+          VideoLesson,
+        ],
+        synchronize: true, // Только для разработки
+      }),
+    }),
+
     UserModule,
     AuthModule,
     MealModule,

@@ -10,16 +10,20 @@ import { User } from '../../entities/user.entity';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from '../../libs/guards/auth.guard';
 import { MailService } from './auth.email.service';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
     PassportModule,
     ConfigModule,
     TypeOrmModule.forFeature([AuthCodes, User]),
-    JwtModule.register({
-      secret: 'jwt-secret-key', // вынеси в ENV!
-      signOptions: { expiresIn: '7d' },
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        secret: config.get('JWT_SECRET_KEY'),
+        signOptions: { expiresIn: '7d' },
+      }),
     }),
   ],
   controllers: [AuthController],

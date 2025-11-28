@@ -9,7 +9,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.enableCors({
-    origin: 'http://localhost:3000',
+    origin: process.env.CORS_ORIGIN?.split(',') || [],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
@@ -23,6 +23,6 @@ async function bootstrap() {
   app.use(cookieParser());
   app.use('/uploads', express.static(join(__dirname, '../../', 'uploads')));
 
-  await app.listen(3001);
+  await app.listen(process.env.PORT || 3000);
 }
 bootstrap();
