@@ -111,7 +111,8 @@ export class AuthController {
       expires: new Date(Date.now() + 1209600000),
       sameSite: 'lax',
       secure: false,
-      domain: 'localhost',
+      // domain: 'localhost',
+      path: '/',
       maxAge: 15 * 60 * 1000,
     });
 
