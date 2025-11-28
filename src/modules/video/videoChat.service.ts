@@ -21,9 +21,9 @@ export class VideoChatService {
     private readonly clientCoach: ClientCoachService,
     private readonly lessons: VideoLessonsService,
   ) {
-    this.apiKey = this.config.get<string>('LK_API_KEY', '');
-    this.apiSecret = this.config.get<string>('LK_API_SECRET', '');
-    this.wsUrl = this.config.get<string>('LK_WS_URL', '');
+    this.apiKey = this.config.get<string>('LIVEKIT_API_KEY', '');
+    this.apiSecret = this.config.get<string>('LIVEKIT_API_SECRET', '');
+    this.wsUrl = this.config.get<string>('LIVEKIT_WS_URL', '');
     if (!this.apiKey || !this.apiSecret || !this.wsUrl) {
       throw new Error(
         'LiveKit config is missing: LK_API_KEY / LK_API_SECRET / LK_WS_URL',
