@@ -12,13 +12,16 @@ import { AuthService } from './auth.service';
 import { VerifyCodeDto } from './dto/verify-code.dto';
 import { RequestCodeDto } from './dto/request-code.dto';
 import { RequestEmailCodeDto } from './dto/request-code-by-email.dto';
+import { ConfigService } from '@nestjs/config';
 
 @Controller('auth')
 export class AuthController {
   private readonly isProd: boolean;
+  private readonly domain: string;
 
-  constructor(private authService: AuthService) {
+  constructor(private authService: AuthService, private config: ConfigService) {
     this.isProd = process.env.NODE_ENV === 'production';
+    this.domain = config.get('DOMAIN');
   }
 
   @Post('request-code')
@@ -46,7 +49,7 @@ export class AuthController {
       expires: new Date(Date.now() + 1209600000),
       sameSite: 'lax',
       secure: this.isProd,
-      domain: 'localhost',
+      domain: this.domain,
       maxAge: 15 * 60 * 1000,
     });
 
@@ -75,7 +78,7 @@ export class AuthController {
       expires: new Date(Date.now() + 1209600000),
       sameSite: 'lax',
       secure: this.isProd,
-      domain: '.routeable.ru',
+      domain: this.domain,
       path: '/',
       maxAge: 15 * 60 * 1000,
     });
@@ -115,7 +118,7 @@ export class AuthController {
       expires: new Date(Date.now() + 1209600000),
       sameSite: 'lax',
       secure: this.isProd,
-      domain: '.routeable.ru',
+      domain: this.domain,
       path: '/',
       maxAge: 15 * 60 * 1000,
     });
