@@ -15,7 +15,11 @@ import { RequestEmailCodeDto } from './dto/request-code-by-email.dto';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  private readonly isProd: boolean;
+
+  constructor(private authService: AuthService) {
+    this.isProd = process.env.NODE_ENV === 'production';
+  }
 
   @Post('request-code')
   requestCode(@Body() dto: RequestCodeDto) {
@@ -41,7 +45,7 @@ export class AuthController {
       httpOnly: true,
       expires: new Date(Date.now() + 1209600000),
       sameSite: 'lax',
-      secure: false,
+      secure: this.isProd,
       domain: 'localhost',
       maxAge: 15 * 60 * 1000,
     });
@@ -50,7 +54,7 @@ export class AuthController {
       httpOnly: true,
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 дней
       sameSite: 'lax',
-      secure: false,
+      secure: this.isProd,
     });
 
     return { user };
@@ -70,7 +74,7 @@ export class AuthController {
       httpOnly: true,
       expires: new Date(Date.now() + 1209600000),
       sameSite: 'lax',
-      secure: false,
+      secure: this.isProd,
       domain: '.routeable.ru',
       path: '/',
       maxAge: 15 * 60 * 1000,
@@ -81,7 +85,7 @@ export class AuthController {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 дней
       sameSite: 'lax',
       path: '/',
-      secure: false,
+      secure: this.isProd,
     });
 
     return { user };
@@ -110,7 +114,7 @@ export class AuthController {
       httpOnly: true,
       expires: new Date(Date.now() + 1209600000),
       sameSite: 'lax',
-      secure: false,
+      secure: this.isProd,
       domain: '.routeable.ru',
       path: '/',
       maxAge: 15 * 60 * 1000,
