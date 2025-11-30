@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - dev
-      - master
+      - main
 
 jobs:
   deploy:
@@ -21,7 +21,7 @@ jobs:
           else
             echo "env_name=prod" >> $GITHUB_OUTPUT
             echo "app_dir=/srv/app-prod" >> $GITHUB_OUTPUT
-            echo "branch=master" >> $GITHUB_OUTPUT
+            echo "branch=main" >> $GITHUB_OUTPUT
           fi
 
       - name: Deploy via SSH
