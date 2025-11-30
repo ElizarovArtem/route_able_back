@@ -1,0 +1,42 @@
+name: Deploy backend to dev & prod
+
+on:
+  push:
+    branches:
+      - dev
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Select environment
+        id: vars
+        run: |
+          if [ "${GITHUB_REF##*/}" = "dev" ]; then
+            echo "env_name=dev" >> $GITHUB_OUTPUT
+            echo "app_dir=/srv/app-dev" >> $GITHUB_OUTPUT
+            echo "branch=dev" >> $GITHUB_OUTPUT
+          else
+            echo "env_name=prod" >> $GITHUB_OUTPUT
+            echo "app_dir=/srv/app-prod" >> $GITHUB_OUTPUT
+            echo "branch=master" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.0 # можно уточнить версию в маркетплейсе
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            echo "Deploying backend to ${{ steps.vars.outputs.env_name }}"
+
+            cd ${{ steps.vars.outputs.app_dir }}/backend
+            git fetch origin
+            git reset --hard origin/${{ steps.vars.outputs.branch }}
+
+            cd ${{ steps.vars.outputs.app_dir }}
+            docker compose build backend
+            docker compose up -d backend
