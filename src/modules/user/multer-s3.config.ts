@@ -20,7 +20,7 @@ import { MulterOptions } from '@nestjs/platform-express/multer/interfaces/multer
 //   }),
 // });
 
-const uploadDir = path.resolve(__dirname, '../../../uploads');
+const uploadDir = path.resolve(__dirname, '../../../../uploads');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
@@ -47,6 +47,6 @@ export const uploadAvatarOptions: MulterOptions = {
     }
   },
   limits: {
-    // fileSize: 5 * 1024 * 1024, // ограничение 5MB
+    fileSize: 5 * 512 * 512,
   },
 };

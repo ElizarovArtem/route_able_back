@@ -10,6 +10,12 @@ export class User {
   @Column({ nullable: true })
   name: string;
 
+  @Column({ nullable: true })
+  height: string;
+
+  @Column({ nullable: true })
+  weight: string;
+
   @Column('text', { array: true })
   roles: Roles[];
 
@@ -21,6 +27,9 @@ export class User {
 
   @Column({ nullable: true })
   about: string;
+
+  @Column({ default: false })
+  isCoachAgreed: boolean;
 
   @OneToMany(() => Day, (day) => day.user, { onDelete: 'CASCADE' })
   days: Day[];
