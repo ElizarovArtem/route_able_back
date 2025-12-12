@@ -5,6 +5,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { Request } from 'express';
 import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC_KEY } from '../../config/decorators/public.decorator';
+import { JwtPayload, JwtUser } from '../../config/interfaces/jwt-payload';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
@@ -27,9 +28,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor() {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
-        // 1. Сначала пробуем вытащить из cookie
         (req: Request) => req?.cookies?.ra_auth_token,
-        // 2. Затем — из Authorization: Bearer
         ExtractJwt.fromAuthHeaderAsBearerToken(),
       ]),
       ignoreExpiration: false,
@@ -37,8 +36,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: any) {
-    // payload — это расшифрованный токен (например, { sub: userId, email })
-    return payload;
+  async validate(payload: JwtPayload): Promise<JwtUser> {
+    return {
+      id: payload.sub,
+      email: payload.email,
+      roles: payload.roles ?? [],
+      name: payload.name,
+    };
   }
 }
