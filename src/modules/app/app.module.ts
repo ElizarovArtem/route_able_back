@@ -23,6 +23,8 @@ import { ExerciseLog } from '../../entities/exercise-log.entity';
 import { VideoLessonsModule } from '../videoLessons/videoLessons.module';
 import { VideoModule } from '../video/video.module';
 import { VideoLesson } from '../../entities/video-lesson.entity';
+import { TimeSlotsModule } from '../timeSlots/timeSlots.module';
+import { TimeSlot } from '../../entities/time-slot.entity';
 
 @Module({
   imports: [
@@ -53,6 +55,7 @@ import { VideoLesson } from '../../entities/video-lesson.entity';
           PlannedExercise,
           ExerciseLog,
           VideoLesson,
+          TimeSlot,
         ],
         synchronize: true, // Только для разработки
       }),
@@ -68,6 +71,7 @@ import { VideoLesson } from '../../entities/video-lesson.entity';
     PlannedExercisesModule,
     VideoLessonsModule,
     VideoModule,
+    TimeSlotsModule,
   ],
   controllers: [],
   providers: [],

@@ -8,9 +8,10 @@ import {
   OnModuleDestroy,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Not, Raw, Between } from 'typeorm';
+import { Repository, Not, Raw, Between, In, DataSource } from 'typeorm';
 import { VideoLesson, LessonStatus } from '../../entities/video-lesson.entity';
 import { ClientCoachService } from '../clientCoach/clientCoach.service';
+import { TimeSlot, TimeSlotStatus } from '../../entities/time-slot.entity';
 
 @Injectable()
 export class VideoLessonsService implements OnModuleInit, OnModuleDestroy {
@@ -25,8 +26,16 @@ export class VideoLessonsService implements OnModuleInit, OnModuleDestroy {
   constructor(
     @InjectRepository(VideoLesson)
     private readonly lessons: Repository<VideoLesson>,
-    private readonly cc: ClientCoachService,
+    private readonly clientCoachService: ClientCoachService,
+    private readonly dataSource: DataSource,
   ) {}
+
+  private getDayRange(date: string): { from: Date; to: Date } {
+    // простой вариант: считаем, что дата в UTC, как и слоты
+    const from = new Date(`${date}T00:00:00.000Z`);
+    const to = new Date(`${date}T23:59:59.999Z`);
+    return { from, to };
+  }
 
   onModuleInit() {
     this.statusSyncTimer = setInterval(() => {
@@ -68,7 +77,10 @@ export class VideoLessonsService implements OnModuleInit, OnModuleDestroy {
     relationId: string,
     dto: { startAt: string; endAt: string; title?: string; notes?: string },
   ) {
-    const link = await this.cc.requireActiveByRelationId(meId, relationId);
+    const link = await this.clientCoachService.requireActiveByRelationId(
+      meId,
+      relationId,
+    );
     const startAt = this.toDate(dto.startAt);
     const endAt = this.toDate(dto.endAt);
     if (endAt <= startAt)
@@ -108,31 +120,72 @@ export class VideoLessonsService implements OnModuleInit, OnModuleDestroy {
   }
 
   async list(meId: string, relationId: string) {
-    const link = await this.cc.requireMembershipByRelationId(meId, relationId);
+    const link = await this.clientCoachService.requireMembershipByRelationId(
+      meId,
+      relationId,
+    );
     return this.lessons.find({
-      where: { clientCoachId: link.id, status: Not(LessonStatus.CANCELED) },
+      where: {
+        clientCoachId: link.id,
+        status: Not(In([LessonStatus.CANCELED, LessonStatus.COMPLETED])),
+      },
       order: { startAt: 'ASC' },
     });
   }
 
-  async cancel(meId: string, lessonId: string) {
-    const lesson = await this.lessons.findOne({ where: { id: lessonId } });
-    if (!lesson) throw new NotFoundException('Lesson not found');
+  async cancel(userId: string, lessonId: string) {
+    return this.dataSource.transaction(async (manager) => {
+      // 1. Находим урок и лочим только ЕГО
+      const lesson = await manager.findOne(VideoLesson, {
+        where: { id: lessonId },
+        lock: { mode: 'pessimistic_write' },
+      });
 
-    const link = await this.cc.requireMembershipByRelationId(
-      meId,
-      lesson.clientCoachId,
-    );
-    if (meId !== link.clientId && meId !== link.coachId)
-      throw new ForbiddenException();
+      if (!lesson) {
+        throw new NotFoundException('Lesson not found');
+      }
 
-    if (lesson.status === LessonStatus.CANCELED) return lesson;
-    lesson.status = LessonStatus.CANCELED;
-    return this.lessons.save(lesson);
+      // проверка: только клиент (или тренер — по желанию)
+      if (lesson.clientId !== userId /* && lesson.coachId !== userId */) {
+        throw new ForbiddenException('You cannot cancel this lesson');
+      }
+
+      if (
+        lesson.status !== LessonStatus.SCHEDULED &&
+        lesson.status !== LessonStatus.IN_PROGRESS
+      ) {
+        throw new BadRequestException('Lesson cannot be canceled');
+      }
+
+      // 2. Отмечаем урок как отменённый
+      lesson.status = LessonStatus.CANCELED;
+      await manager.save(lesson);
+
+      // 3. Ищем связанный слот (без join’ов с FOR UPDATE)
+      const slot = await manager.findOne(TimeSlot, {
+        where: {
+          videoLessonId: lesson.id,
+          coachId: lesson.coachId,
+          status: TimeSlotStatus.BOOKED,
+        },
+      });
+
+      if (slot) {
+        // 4. Освобождаем слот
+        slot.status = TimeSlotStatus.FREE;
+        slot.videoLessonId = null;
+        await manager.save(slot);
+      }
+
+      return { success: true };
+    });
   }
 
   async canJoin(meId: string, relationId: string, now = new Date()) {
-    const link = await this.cc.requireMembershipByRelationId(meId, relationId);
+    const link = await this.clientCoachService.requireMembershipByRelationId(
+      meId,
+      relationId,
+    );
     const startUpperBound = new Date(
       now.getTime() + this.earlyJoinMin * 60_000,
     );
@@ -156,7 +209,10 @@ export class VideoLessonsService implements OnModuleInit, OnModuleDestroy {
     lessonId: string,
     now = new Date(),
   ) {
-    const link = await this.cc.requireMembershipByRelationId(meId, relationId);
+    const link = await this.clientCoachService.requireMembershipByRelationId(
+      meId,
+      relationId,
+    );
     const lesson = await this.lessons.findOne({
       where: { id: lessonId, clientCoachId: link.id },
     });
@@ -211,5 +267,22 @@ export class VideoLessonsService implements OnModuleInit, OnModuleDestroy {
     }
 
     return updates;
+  }
+
+  async listForCoachByDay(coachId: string, date: string) {
+    const { from, to } = this.getDayRange(date);
+
+    return this.lessons.find({
+      where: {
+        coachId,
+        status: In([LessonStatus.SCHEDULED, LessonStatus.IN_PROGRESS]),
+        startAt: Between(from, to),
+      },
+      order: { startAt: 'ASC' },
+      relations: {
+        client: true,
+        relation: true,
+      },
+    });
   }
 }

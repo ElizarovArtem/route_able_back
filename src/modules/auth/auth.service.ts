@@ -40,13 +40,13 @@ export class AuthService {
       code,
       channel: AuthChannel.EMAIL,
     });
-
-    await this.emailService.sendMail({
-      to: email,
-      subject: 'Ваш проверочный код',
-      text: `Проверочный код: ${code}`,
-      html: `<p>Проверочный код: ${code}</p>`,
-    });
+    console.log(code);
+    // await this.emailService.sendMail({
+    //   to: email,
+    //   subject: 'Ваш проверочный код',
+    //   text: `Проверочный код: ${code}`,
+    //   html: `<p>Проверочный код: ${code}</p>`,
+    // });
     return { success: true };
   }
 
@@ -68,7 +68,7 @@ export class AuthService {
     }
 
     const payload = {
-      id: user.id,
+      sub: user.id,
       phone: user.phone,
       roles: user.roles,
       name: user.name,
@@ -103,7 +103,7 @@ export class AuthService {
     }
 
     const payload = {
-      id: user.id,
+      sub: user.id,
       email: user.email,
       roles: user.roles,
       name: user.name,
@@ -120,7 +120,7 @@ export class AuthService {
       const payload = this.jwtService.verify(refreshToken);
 
       const newPayload = {
-        id: payload.id,
+        sub: payload.sub,
         phone: payload.phone,
         email: payload.email,
         roles: payload.roles,
