@@ -13,11 +13,12 @@ export class UpdateUserDto {
 
   @IsOptional()
   @IsNumberString()
-  height?: string;
+  height?: number;
 
   @IsOptional()
   @IsString()
-  weight?: string;
+  @IsNumberString()
+  weight?: number;
 
   @IsOptional()
   @IsNumberString()

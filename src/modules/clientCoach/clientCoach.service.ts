@@ -14,6 +14,7 @@ import {
   MyRelationsItem,
   RelationView,
 } from '../../config/interfaces/relations';
+import { MealService } from '../meal/meal.service';
 
 @Injectable()
 export class ClientCoachService {
@@ -21,6 +22,7 @@ export class ClientCoachService {
     @InjectRepository(ClientCoach) private links: Repository<ClientCoach>,
     @InjectRepository(Chat) private chats: Repository<Chat>,
     @InjectRepository(User) private users: Repository<User>,
+    private readonly mealsService: MealService,
   ) {}
 
   // принадлежность по relationId
@@ -106,8 +108,7 @@ export class ClientCoachService {
     return this.links.save(link);
   }
 
-  // Получить "вид" по partnerId (универсально для ClientPage и CoachPage)
-  async getViewWithPartner(meId: string, partnerId: string) {
+  async getViewWithPartner(meId: string, partnerId: string, date?: string) {
     const partner = await this.users.findOne({ where: { id: partnerId } });
     if (!partner) throw new NotFoundException('Партнёр не найден');
 
@@ -119,44 +120,78 @@ export class ClientCoachService {
       ],
     });
 
-    // чат (если есть)
-    let chatBlock: RelationView['chat'] = null;
-    if (link) {
-      const chat = await this.chats.findOne({
-        where: { clientCoachId: link.id },
-      });
-      if (chat) {
-        chatBlock = {
-          id: chat.id,
-        };
-      }
+    // если связи нет — дальше аккуратно
+    if (!link) {
+      return {
+        meRole: null,
+        partner: {
+          id: partner.id,
+          name: partner.name,
+          about: partner.about,
+          avatar: partner.avatar,
+        },
+        relation: null,
+        chat: null,
+        billing: null,
+        booking: { next: null },
+        nutrition: null,
+      };
     }
 
-    // задел под биллинг/бронь (пока null/минимум из link.isActive)
-    const billing = link
-      ? { isActive: !!link.isActive, creditsRemaining: null }
-      : null;
-    const booking = { next: null } as RelationView['booking'];
+    const meRole = link.clientId === meId ? Roles.Client : Roles.Coach;
+
+    let chatBlock: RelationView['chat'] = null;
+    const chat = await this.chats.findOne({
+      where: { clientCoachId: link.id },
+    });
+    if (chat) {
+      chatBlock = { id: chat.id };
+    }
+
+    const billing = {
+      isActive: !!link.isActive,
+      creditsRemaining: null,
+    } as RelationView['billing'];
+
+    // 🔥 NUTRITION: кбжу клиента за день (по желанию — и для тренера, и для клиента)
+    let nutrition: RelationView['nutrition'] = null;
+
+    if (date) {
+      // Определяем, кто из двоих клиент
+      const clientId = link.clientId;
+
+      // Берём уже существующую логику суммирования за день
+      const daySummary = await this.mealsService.getMealsSummaryForDay(
+        date,
+        clientId,
+      );
+
+      // Если хочешь не отдавать тренеру все приёмы пищи — можно выкинуть meals
+      nutrition = {
+        date: daySummary.date,
+        summary: daySummary.summary,
+        goals: daySummary.goals,
+        // meals: daySummary.meals, // если всё-таки нужно отдать и список
+      } as RelationView['nutrition'];
+    }
 
     return {
-      meRole: link.clientId === meId ? Roles.Client : Roles.Coach,
+      meRole,
       partner: {
         id: partner.id,
         name: partner.name,
         about: partner.about,
         avatar: partner.avatar,
       },
-      relation: link
-        ? {
-            id: link.id,
-            isActive: !!link.isActive,
-            activatedAt: link.activatedAt ?? null,
-            deactivatedAt: link.deactivatedAt ?? null,
-          }
-        : null,
+      relation: {
+        id: link.id,
+        isActive: !!link.isActive,
+        activatedAt: link.activatedAt ?? null,
+        deactivatedAt: link.deactivatedAt ?? null,
+      },
       chat: chatBlock,
       billing,
-      booking,
+      nutrition,
     } as RelationView;
   }
 

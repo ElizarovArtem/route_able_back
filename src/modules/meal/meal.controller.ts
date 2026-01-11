@@ -15,7 +15,6 @@ import { CreateMealDto } from './dto/create-meal.dto';
 import { Request } from 'express';
 import { User } from '../../entities/user.entity';
 import { JwtAuthGuard } from '../../libs/guards/auth.guard';
-import { AiService } from './meal.ai.service';
 import { AnalyzeMealPhotoDto } from './dto/analyze-meal-photo.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import * as multer from 'multer';
@@ -25,10 +24,7 @@ const memoryStorage = multer.memoryStorage();
 @Controller('meals')
 @UseGuards(JwtAuthGuard)
 export class MealController {
-  constructor(
-    private readonly mealService: MealService,
-    private readonly aiService: AiService,
-  ) {}
+  constructor(private readonly mealService: MealService) {}
 
   @Post()
   async addMeal(@Body() dto: CreateMealDto, @Req() req: Request) {
@@ -44,12 +40,12 @@ export class MealController {
       throw new BadRequestException('Missing required query parameter: date');
     }
 
-    return this.mealService.getMealsSummaryForDay(date, user);
+    return this.mealService.getMealsSummaryForDay(date, user.id);
   }
 
   @Post('analyze')
   async analyze(@Body('text') text: string) {
-    return this.aiService.analyzeTextMeal(text);
+    return this.mealService.analyzeTextMeal(text);
   }
 
   @UseInterceptors(FileInterceptor('photo', { storage: memoryStorage }))
@@ -58,6 +54,6 @@ export class MealController {
     @Body() body: AnalyzeMealPhotoDto,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    return this.aiService.analyzePhotoMeal(body, file);
+    return this.mealService.analyzePhotoMeal(body, file);
   }
 }

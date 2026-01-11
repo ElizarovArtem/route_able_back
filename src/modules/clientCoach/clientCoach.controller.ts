@@ -6,10 +6,12 @@ import {
   Req,
   Get,
   Body,
+  Query,
 } from '@nestjs/common';
 import { ClientCoachService } from './clientCoach.service';
 import { JwtAuthGuard } from '../../libs/guards/auth.guard';
 import { UpsertGoalsDto } from './dto/set-goals.dto';
+import { RelationQueryDto } from './dto/relation-query.dto';
 
 @Controller('client-coach')
 @UseGuards(JwtAuthGuard)
@@ -17,8 +19,16 @@ export class ClientCoachController {
   constructor(private readonly relationsService: ClientCoachService) {}
 
   @Get('with/:partnerId')
-  getWithPartner(@Req() req, @Param('partnerId') partnerId: string) {
-    return this.relationsService.getViewWithPartner(req.user.id, partnerId);
+  getWithPartner(
+    @Req() req,
+    @Param('partnerId') partnerId: string,
+    @Query() query: RelationQueryDto,
+  ) {
+    return this.relationsService.getViewWithPartner(
+      req.user.id,
+      partnerId,
+      query.date,
+    );
   }
 
   @Get('my')
