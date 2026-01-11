@@ -11,9 +11,11 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from '../../libs/guards/auth.guard';
 import { MailService } from './auth.email.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { UserModule } from '../user/user.module';
 
 @Module({
   imports: [
+    UserModule,
     PassportModule,
     ConfigModule,
     TypeOrmModule.forFeature([AuthCodes, User]),
@@ -27,6 +29,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, SmsService, UserService, JwtStrategy, MailService],
+  providers: [AuthService, SmsService, JwtStrategy, MailService],
 })
 export class AuthModule {}

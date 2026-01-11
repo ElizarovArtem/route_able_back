@@ -1,17 +1,29 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Meal } from '../../entities/meal.entity';
 import { DayService } from '../day/day.service';
 import { User } from '../../entities/user.entity';
 import { CreateMealDto } from './dto/create-meal.dto';
+import { ClientCoach } from '../../entities/client-coach.entity';
+import { GigaChatService } from '../ai/gigachat.service';
+import { AnalyzeMealPhotoDto } from './dto/analyze-meal-photo.dto';
 
 @Injectable()
 export class MealService {
   constructor(
     @InjectRepository(Meal)
     private readonly mealRepo: Repository<Meal>,
+    @InjectRepository(ClientCoach)
+    private readonly clientCoachRepo: Repository<ClientCoach>,
+    @InjectRepository(User)
+    private readonly usersRepo: Repository<User>,
     private readonly dayService: DayService,
+    private readonly gigaChat: GigaChatService,
   ) {}
 
   async addMeal(dto: CreateMealDto, user: User): Promise<Meal> {
@@ -25,7 +37,13 @@ export class MealService {
     return this.mealRepo.save(meal);
   }
 
-  async getMealsSummaryForDay(date: string, user: User) {
+  async getMealsSummaryForDay(date: string, userId: string) {
+    const user = await this.usersRepo.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
     const qb = this.mealRepo
       .createQueryBuilder('m')
       .innerJoin('m.day', 'd')
@@ -45,6 +63,142 @@ export class MealService {
       { calories: 0, protein: 0, fat: 0, carbs: 0 },
     );
 
-    return { date, summary, meals };
+    // 🎯 ЛИЧНЫЕ ЦЕЛИ ПОЛЬЗОВАТЕЛЯ
+    const hasPersonalGoals =
+      user.personalGoalCalories != null ||
+      user.personalGoalProtein != null ||
+      user.personalGoalFat != null ||
+      user.personalGoalCarbs != null;
+
+    const personalGoals = hasPersonalGoals
+      ? {
+          calories: Number(user.personalGoalCalories) ?? null,
+          protein: Number(user.personalGoalProtein) ?? null,
+          fat: Number(user.personalGoalFat) ?? null,
+          carbs: Number(user.personalGoalCarbs) ?? null,
+        }
+      : null;
+
+    // 🎯 ЦЕЛИ ТРЕНЕРОВ (МОЖЕТ БЫТЬ НЕСКОЛЬКО)
+    const relations = await this.clientCoachRepo.find({
+      where: { clientId: user.id, isActive: true },
+      relations: { coach: true },
+    });
+
+    const coachGoals = relations
+      .map((rel) => {
+        const hasGoals =
+          rel.goalCalories != null ||
+          rel.goalProtein != null ||
+          rel.goalFat != null ||
+          rel.goalCarbs != null;
+
+        if (!hasGoals) return null;
+
+        return {
+          clientCoachId: rel.id,
+          coachId: rel.coachId,
+          coachName: rel.coach?.name ?? null,
+          calories: Number(rel.goalCalories) ?? null,
+          protein: Number(rel.goalProtein) ?? null,
+          fat: Number(rel.goalFat) ?? null,
+          carbs: Number(rel.goalCarbs) ?? null,
+        };
+      })
+      .filter((g) => g !== null);
+
+    return {
+      date,
+      summary,
+      meals,
+      goals: {
+        personal: personalGoals,
+        coaches: coachGoals as {
+          clientCoachId: string;
+          coachId: string;
+          coachName: string | null;
+          calories: number | null;
+          protein: number | null;
+          fat: number | null;
+          carbs: number | null;
+        }[],
+      },
+    };
+  }
+
+  async analyzeTextMeal(text: string) {
+    const prompt = `
+      Ты — нутрициолог. На основе описания еды оцени примерное количество калорий, белков, жиров и углеводов.
+      Верни ТОЛЬКО JSON следующего вида:
+      
+      {
+        "name": string,
+        "calories": number,
+        "protein": number,
+        "fat": number,
+        "carbs": number
+      }
+      
+      Никакого дополнительного текста. Только JSON.
+      Описание: ${text}
+      `;
+
+    try {
+      const content = await this.gigaChat.chat({
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.3,
+      });
+
+      const jsonMatch = content.match(/\{[\s\S]*?\}/);
+      const json = jsonMatch ? JSON.parse(jsonMatch[0]) : null;
+
+      if (!json) {
+        throw new Error('Невозможно разобрать JSON');
+      }
+
+      return json;
+    } catch (error) {
+      console.error('GigaChat error:', error?.response?.data || error.message);
+      throw new InternalServerErrorException(
+        'GigaChat не смог обработать запрос',
+      );
+    }
+  }
+
+  async analyzePhotoMeal(
+    { weight }: AnalyzeMealPhotoDto,
+    photo: Express.Multer.File,
+  ) {
+    try {
+      const prompt = `
+      Ты — нутрициолог. На основе изображения блюда и данных ниже оцени БЖУ и калории.
+      Учитывай вес (в граммах), масштабируй значения пропорционально.
+      
+      Данные:
+      - Вес (граммы): ${weight}
+      
+      Верни ТОЛЬКО JSON без лишнего текста:
+      {
+        "name": string,      // название блюда/продукта
+        "calories": number,  // ккал на весь объём
+        "protein": number,   // граммы белка
+        "fat": number,       // граммы жира
+        "carbs": number      // граммы углеводов
+      }
+      `.trim();
+
+      const content = await this.gigaChat.chatWithImage({
+        prompt,
+        file: photo,
+      });
+
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) throw new Error('JSON not found in model response');
+
+      return JSON.parse(jsonMatch[0]);
+    } catch (e) {
+      console.log(e);
+      throw new InternalServerErrorException(`GigaChat Vision error: ${e}`);
+    }
   }
 }

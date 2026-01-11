@@ -9,6 +9,34 @@ export type MyRelationsItem = {
   isActive?: boolean;
 };
 
+export type NutritionBlock = {
+  date: string;
+  summary: {
+    calories: number;
+    protein: number;
+    fat: number;
+    carbs: number;
+  };
+  goals: {
+    personal: {
+      calories: number | null;
+      protein: number | null;
+      fat: number | null;
+      carbs: number | null;
+    } | null;
+    coaches: {
+      clientCoachId: string;
+      coachId: string;
+      coachName: string | null;
+      calories: number | null;
+      protein: number | null;
+      fat: number | null;
+      carbs: number | null;
+    }[];
+  };
+  // meals?: Meal[]; // опционально, если захочешь
+};
+
 export type RelationView = {
   meRole: Roles; // кем я являюсь в паре (или пока не в паре)
   partner: { id: string; name: string; avatarUrl?: string | null };
@@ -23,12 +51,5 @@ export type RelationView = {
   } | null;
   // заделы, могут быть null до внедрения:
   billing: { isActive: boolean; creditsRemaining?: number | null } | null;
-  booking: {
-    next?: {
-      id: string;
-      startsAt: string;
-      endsAt: string;
-      status: string;
-    } | null;
-  } | null;
+  nutrition: NutritionBlock | null;
 };
