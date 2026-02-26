@@ -20,6 +20,7 @@ import { UserModule } from '../user/user.module';
     ConfigModule,
     TypeOrmModule.forFeature([AuthCodes, User]),
     JwtModule.registerAsync({
+      global: true,
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
