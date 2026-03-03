@@ -27,6 +27,8 @@ import { TimeSlotsModule } from '../timeSlots/timeSlots.module';
 import { TimeSlot } from '../../entities/time-slot.entity';
 import { WorkoutSession } from '../../entities/workout-session.entity';
 import { WorkoutExercise } from '../../entities/workout-exercise.entity';
+import { CoachVerificationRequest } from '../../entities/coach-verification.entity';
+import { CoachVerificationModule } from '../coachVerification/coachVerification.module';
 
 @Module({
   imports: [
@@ -60,6 +62,7 @@ import { WorkoutExercise } from '../../entities/workout-exercise.entity';
           TimeSlot,
           WorkoutSession,
           WorkoutExercise,
+          CoachVerificationRequest,
         ],
         synchronize: true, // Только для разработки
       }),
@@ -76,6 +79,7 @@ import { WorkoutExercise } from '../../entities/workout-exercise.entity';
     VideoLessonsModule,
     VideoModule,
     TimeSlotsModule,
+    CoachVerificationModule,
   ],
   controllers: [],
   providers: [],

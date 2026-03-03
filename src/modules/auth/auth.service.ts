@@ -3,10 +3,10 @@ import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AuthChannel, AuthCodes } from '../../entities/auth.entity';
 import { JwtService } from '@nestjs/jwt';
-import { SmsService } from './auth.sms.service';
 import { UserService } from '../user/user.service';
 import { Roles } from '../../config/emuns/user';
 import { MailService } from './auth.email.service';
+import { TelegramGatewayService } from './auth.telegram.service';
 
 @Injectable()
 export class AuthService {
@@ -14,22 +14,34 @@ export class AuthService {
     @InjectRepository(AuthCodes)
     private authCodeRepo: Repository<AuthCodes>,
     private jwtService: JwtService,
-    private smsService: SmsService,
     private emailService: MailService,
+    private telegramService: TelegramGatewayService,
     private userService: UserService,
   ) {}
 
-  async requestCode(phone: string) {
+  async requestTelegramCode(phone: string) {
     const code = Math.floor(100000 + Math.random() * 900000).toString();
 
     await this.authCodeRepo.save({
       phone,
       code,
-      channel: AuthChannel.SMS,
+      channel: AuthChannel.TELEGRAM,
     });
 
-    await this.smsService.sendSms(phone, `Ваш код: ${code}`);
-    return { success: true };
+    try {
+      await this.telegramService.sendVerificationMessage({
+        phoneNumber: phone,
+        code,
+      });
+
+      return { success: true };
+    } catch (e) {
+      await this.authCodeRepo.delete({
+        phone,
+        code,
+        channel: AuthChannel.TELEGRAM,
+      });
+    }
   }
 
   async requestEmailCode(email: string) {

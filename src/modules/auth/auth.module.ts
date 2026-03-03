@@ -5,13 +5,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthCodes } from '../../entities/auth.entity';
 import { JwtModule } from '@nestjs/jwt';
 import { SmsService } from './auth.sms.service';
-import { UserService } from '../user/user.service';
 import { User } from '../../entities/user.entity';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from '../../libs/guards/auth.guard';
 import { MailService } from './auth.email.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserModule } from '../user/user.module';
+import { TelegramGatewayService } from './auth.telegram.service';
 
 @Module({
   imports: [
@@ -30,6 +30,12 @@ import { UserModule } from '../user/user.module';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, SmsService, JwtStrategy, MailService],
+  providers: [
+    AuthService,
+    SmsService,
+    JwtStrategy,
+    MailService,
+    TelegramGatewayService,
+  ],
 })
 export class AuthModule {}
