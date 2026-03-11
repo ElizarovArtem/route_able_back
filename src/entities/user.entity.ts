@@ -1,4 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToMany,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { Day } from './day.entity';
 import { ActivityLevel, Gender, Roles, WeightGoal } from '../config/emuns/user';
 
@@ -71,4 +78,10 @@ export class User {
 
   @Column({ type: 'numeric', precision: 10, scale: 2, nullable: true })
   personalGoalCarbs?: number | null;
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
 }

@@ -39,7 +39,16 @@ export type NutritionBlock = {
 
 export type RelationView = {
   meRole: Roles; // кем я являюсь в паре (или пока не в паре)
-  partner: { id: string; name: string; avatarUrl?: string | null };
+  partner: {
+    id: string;
+    name: string;
+    avatar?: string;
+    about?: string;
+    rating: {
+      avg: number;
+      count: number;
+    } | null;
+  };
   relation: {
     id: string;
     isActive: boolean;

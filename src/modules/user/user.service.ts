@@ -11,6 +11,8 @@ import { ActivityLevel, Roles, WeightGoal } from '../../config/emuns/user';
 import { UpdatePersonalGoalsDto } from './dto/update-personal-goals.dto';
 import { CalcCaloriesDto } from './dto/analyze-tdee.dto';
 import { GigaChatService } from '../ai/gigachat.service';
+import { CoachListItem } from '../../config/interfaces/user';
+import { CoachProfile } from 'src/entities/coach-profile.entity';
 
 @Injectable()
 export class UserService {
@@ -88,12 +90,40 @@ export class UserService {
     return this.userRepository.findOneBy({ id });
   }
 
-  getCoaches(currentUserId?: string): Promise<User[]> {
-    return this.userRepository
+  async getCoaches(currentUserId?: string): Promise<CoachListItem[]> {
+    const qb = this.userRepository
       .createQueryBuilder('u')
-      .where(':role = ANY(u.roles)', { role: Roles.Coach })
-      .andWhere(':me <> u.id ', { me: currentUserId })
-      .getMany();
+      .leftJoin(CoachProfile, 'cp', 'cp."userId" = u.id')
+      .where(':role = ANY(u.roles)', { role: Roles.Coach });
+
+    if (currentUserId) {
+      qb.andWhere('u.id <> :me', { me: currentUserId });
+    }
+
+    const rows = await qb
+      .select([
+        'u.id as id',
+        'u.name as name',
+        'u.about as about',
+        'u.avatar as avatar',
+        'COALESCE(cp."ratingAvg", 0) as "ratingAvg"',
+        'COALESCE(cp."ratingCount", 0) as "ratingCount"',
+      ])
+      .orderBy('cp."ratingAvg"', 'DESC', 'NULLS LAST')
+      .addOrderBy('cp."ratingCount"', 'DESC')
+      .addOrderBy('u.createdAt', 'DESC')
+      .getRawMany();
+
+    return rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      about: row.about,
+      avatar: row.avatar,
+      rating: {
+        avg: Number(row.ratingAvg ?? 0),
+        count: Number(row.ratingCount ?? 0),
+      },
+    }));
   }
 
   async updateUser(

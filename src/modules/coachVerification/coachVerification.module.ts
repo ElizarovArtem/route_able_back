@@ -7,9 +7,12 @@ import { CoachVerificationController } from './coachVerification.controller';
 import { User } from '../../entities/user.entity';
 import { AdminCoachVerificationController } from './coachVerification.admin.controller';
 import { CoachVerificationRequest } from '../../entities/coach-verification.entity';
+import { CoachProfile } from '../../entities/coach-profile.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([CoachVerificationRequest, User])],
+  imports: [
+    TypeOrmModule.forFeature([CoachVerificationRequest, User, CoachProfile]),
+  ],
   controllers: [CoachVerificationController, AdminCoachVerificationController],
   providers: [CoachVerificationService],
   exports: [CoachVerificationService],

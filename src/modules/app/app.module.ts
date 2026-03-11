@@ -29,6 +29,10 @@ import { WorkoutSession } from '../../entities/workout-session.entity';
 import { WorkoutExercise } from '../../entities/workout-exercise.entity';
 import { CoachVerificationRequest } from '../../entities/coach-verification.entity';
 import { CoachVerificationModule } from '../coachVerification/coachVerification.module';
+import { CoachReviewsModule } from '../coachReview/coachReview.module';
+import { CoachReview } from '../../entities/coach-review.entity';
+import { CoachProfile } from '../../entities/coach-profile.entity';
+import { Purchase } from '../../entities/purchase.entity';
 
 @Module({
   imports: [
@@ -63,6 +67,9 @@ import { CoachVerificationModule } from '../coachVerification/coachVerification.
           WorkoutSession,
           WorkoutExercise,
           CoachVerificationRequest,
+          CoachReview,
+          CoachProfile,
+          Purchase,
         ],
         synchronize: true, // Только для разработки
       }),
@@ -80,6 +87,7 @@ import { CoachVerificationModule } from '../coachVerification/coachVerification.
     VideoModule,
     TimeSlotsModule,
     CoachVerificationModule,
+    CoachReviewsModule,
   ],
   controllers: [],
   providers: [],

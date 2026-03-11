@@ -10,10 +10,13 @@ import { CoachVerificationRequest } from '../../entities/coach-verification.enti
 import { User } from '../../entities/user.entity';
 import { CoachVerificationStatus } from '../../config/emuns/coach-verification';
 import { Roles } from '../../config/emuns/user';
+import { CoachProfile } from '../../entities/coach-profile.entity';
 
 @Injectable()
 export class CoachVerificationService {
   constructor(
+    @InjectRepository(CoachProfile)
+    private readonly coachProfileRepo: Repository<CoachProfile>,
     @InjectRepository(CoachVerificationRequest)
     private readonly reqRepo: Repository<CoachVerificationRequest>,
     @InjectRepository(User)
@@ -23,15 +26,21 @@ export class CoachVerificationService {
 
   async create(userId: string, name: string, contactInfo: string) {
     const user = await this.userRepo.findOne({ where: { id: userId } });
+
     if (!user) throw new NotFoundException('User not found');
-    if ((user as any).isCoach) throw new BadRequestException('Уже тренер');
+
+    if (user.roles?.includes(Roles.Coach)) {
+      throw new BadRequestException('Уже тренер');
+    }
 
     const pending = await this.reqRepo.findOne({
       where: { userId, status: CoachVerificationStatus.PENDING },
     });
+
     if (pending) throw new ConflictException('Заявка уже отправлена');
 
     const entity = this.reqRepo.create({ userId, name, contactInfo });
+
     return this.reqRepo.save(entity);
   }
 
@@ -58,9 +67,11 @@ export class CoachVerificationService {
     return this.dataSource.transaction(async (tx) => {
       const reqRepo = tx.getRepository(CoachVerificationRequest);
       const userRepo = tx.getRepository(User);
+      const coachProfileRepo = tx.getRepository(CoachProfile);
 
       const req = await reqRepo.findOne({ where: { id: requestId } });
       if (!req) throw new NotFoundException('Request not found');
+
       if (req.status !== CoachVerificationStatus.PENDING) {
         throw new ConflictException('Заявка уже рассмотрена');
       }
@@ -74,7 +85,14 @@ export class CoachVerificationService {
           throw new NotFoundException('User not found');
         }
 
-        user.roles = [...user.roles, Roles.Coach];
+        const hasCoachRole = user.roles?.includes(Roles.Coach);
+
+        if (!hasCoachRole) {
+          user.roles = Array.from(
+            new Set([...(user.roles ?? []), Roles.Coach]),
+          );
+        }
+
         user.isCoachAgreed = true;
 
         if (!user.name) {
@@ -82,6 +100,22 @@ export class CoachVerificationService {
         }
 
         await userRepo.save(user);
+
+        const existingCoachProfile = await coachProfileRepo.findOne({
+          where: { userId: user.id },
+        });
+
+        if (!existingCoachProfile) {
+          const coachProfile = coachProfileRepo.create({
+            userId: user.id,
+            isPublic: true,
+            ratingSum: 0,
+            ratingCount: 0,
+            ratingAvg: 0,
+          });
+
+          await coachProfileRepo.save(coachProfile);
+        }
 
         req.status = CoachVerificationStatus.APPROVED;
       } else {

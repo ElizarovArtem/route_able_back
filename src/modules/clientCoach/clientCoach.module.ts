@@ -6,9 +6,13 @@ import { ClientCoachService } from './clientCoach.service';
 import { ClientCoachController } from './clientCoach.controller';
 import { Chat } from '../../entities/chat.entity';
 import { MealModule } from '../meal/meal.module';
+import { CoachProfile } from '../../entities/coach-profile.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ClientCoach, User, Chat]), MealModule],
+  imports: [
+    TypeOrmModule.forFeature([ClientCoach, User, Chat, CoachProfile]),
+    MealModule,
+  ],
   controllers: [ClientCoachController],
   providers: [ClientCoachService],
   exports: [ClientCoachService],

@@ -21,6 +21,7 @@ import { CurrentUser } from '../../config/decorators/current-user.decorator';
 import { UpdatePersonalGoalsDto } from './dto/update-personal-goals.dto';
 import * as multer from 'multer';
 import { CalcCaloriesDto } from './dto/analyze-tdee.dto';
+import { CoachListItem } from '../../config/interfaces/user';
 
 const memoryStorage = multer.memoryStorage();
 
@@ -40,7 +41,7 @@ export class UserController {
   }
 
   @Get('coaches')
-  getCoaches(@Req() req: Request): Promise<User[]> {
+  getCoaches(@Req() req: Request): Promise<CoachListItem[]> {
     const user = req.user as User;
     return this.userService.getCoaches(user.id);
   }
