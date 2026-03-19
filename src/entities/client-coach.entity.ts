@@ -12,20 +12,27 @@ import { User } from './user.entity';
 @Entity('client_coach')
 @Unique('uq_client_coach_pair', ['clientId', 'coachId'])
 export class ClientCoach {
-  @PrimaryGeneratedColumn('uuid') id: string;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-  @Column('uuid') clientId: string;
+  @Column('uuid')
+  clientId: string;
+
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'clientId', referencedColumnName: 'id' })
   client: User;
 
-  @Column('uuid') coachId: string;
+  @Column('uuid')
+  coachId: string;
+
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'coachId', referencedColumnName: 'id' })
   coach: User;
 
-  @CreateDateColumn() createdAt: Date;
+  @CreateDateColumn()
+  createdAt: Date;
 
+  // есть ли сейчас активное платное взаимодействие
   @Column({ type: 'boolean', default: false })
   isActive: boolean;
 
@@ -34,6 +41,18 @@ export class ClientCoach {
 
   @Column({ type: 'timestamptz', nullable: true })
   deactivatedAt?: Date;
+
+  @Column({ type: 'int', default: 0 })
+  sessionsTotal: number;
+
+  @Column({ type: 'int', default: 0 })
+  sessionsUsed: number;
+
+  @Column({ type: 'int', default: 0 })
+  sessionsRemaining: number;
+
+  @Column({ type: 'int', default: 0 })
+  sessionsReserved: number;
 
   @Column('int', { nullable: true })
   goalCalories?: number | null;

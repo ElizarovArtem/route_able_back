@@ -7,10 +7,17 @@ import { User } from '../../entities/user.entity';
 import { TimeSlotsService } from './timeSlots.service';
 import { TimeSlotsController } from './timeSlots.controller';
 import { CoachTimeSlotsController } from './coachTimeSlots.controller';
+import { CoachWorkoutSessions } from '../../entities/coach-workout-sessions';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([TimeSlot, ClientCoach, VideoLesson, User]),
+    TypeOrmModule.forFeature([
+      TimeSlot,
+      ClientCoach,
+      VideoLesson,
+      User,
+      CoachWorkoutSessions,
+    ]),
   ],
   providers: [TimeSlotsService],
   controllers: [TimeSlotsController, CoachTimeSlotsController],

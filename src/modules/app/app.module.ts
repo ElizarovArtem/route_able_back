@@ -33,6 +33,11 @@ import { CoachReviewsModule } from '../coachReview/coachReview.module';
 import { CoachReview } from '../../entities/coach-review.entity';
 import { CoachProfile } from '../../entities/coach-profile.entity';
 import { Purchase } from '../../entities/purchase.entity';
+import { CoachBillingModule } from '../coachBilling/coachBilling.module';
+import { PaymentsModule } from '../payment/payments.module';
+import { ClientCoachTransaction } from '../../entities/client-coach-transaction.entity';
+import { CoachOffer } from '../../entities/coach-offer.entity';
+import { CoachOrder } from '../../entities/coach-order.entity';
 
 @Module({
   imports: [
@@ -70,6 +75,9 @@ import { Purchase } from '../../entities/purchase.entity';
           CoachReview,
           CoachProfile,
           Purchase,
+          ClientCoachTransaction,
+          CoachOffer,
+          CoachOrder,
         ],
         synchronize: true, // Только для разработки
       }),
@@ -88,6 +96,8 @@ import { Purchase } from '../../entities/purchase.entity';
     TimeSlotsModule,
     CoachVerificationModule,
     CoachReviewsModule,
+    CoachBillingModule,
+    PaymentsModule,
   ],
   controllers: [],
   providers: [],
