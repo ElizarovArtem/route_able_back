@@ -15,13 +15,19 @@ import {
   RelationView,
 } from '../../config/interfaces/relations';
 import { MealService } from '../meal/meal.service';
+import { CoachProfile } from '../../entities/coach-profile.entity';
 
 @Injectable()
 export class ClientCoachService {
   constructor(
-    @InjectRepository(ClientCoach) private links: Repository<ClientCoach>,
-    @InjectRepository(Chat) private chats: Repository<Chat>,
-    @InjectRepository(User) private users: Repository<User>,
+    @InjectRepository(ClientCoach)
+    private links: Repository<ClientCoach>,
+    @InjectRepository(Chat)
+    private chats: Repository<Chat>,
+    @InjectRepository(User)
+    private users: Repository<User>,
+    @InjectRepository(CoachProfile)
+    private readonly coachProfiles: Repository<CoachProfile>,
     private readonly mealsService: MealService,
   ) {}
 
@@ -120,7 +126,7 @@ export class ClientCoachService {
       ],
     });
 
-    // если связи нет — дальше аккуратно
+    // если связи нет — не можем понять, кто в этой паре тренер
     if (!link) {
       return {
         meRole: null,
@@ -129,6 +135,7 @@ export class ClientCoachService {
           name: partner.name,
           about: partner.about,
           avatar: partner.avatar,
+          rating: null,
         },
         relation: null,
         chat: null,
@@ -139,11 +146,24 @@ export class ClientCoachService {
     }
 
     const meRole = link.clientId === meId ? Roles.Client : Roles.Coach;
+    const isPartnerCoachInThisRelation = link.coachId === partner.id;
+
+    const coachProfile = isPartnerCoachInThisRelation
+      ? await this.coachProfiles.findOne({
+          where: { userId: partner.id },
+          select: {
+            userId: true,
+            ratingAvg: true,
+            ratingCount: true,
+          },
+        })
+      : null;
 
     let chatBlock: RelationView['chat'] = null;
     const chat = await this.chats.findOne({
       where: { clientCoachId: link.id },
     });
+
     if (chat) {
       chatBlock = { id: chat.id };
     }
@@ -153,25 +173,20 @@ export class ClientCoachService {
       creditsRemaining: null,
     } as RelationView['billing'];
 
-    // 🔥 NUTRITION: кбжу клиента за день (по желанию — и для тренера, и для клиента)
     let nutrition: RelationView['nutrition'] = null;
 
     if (date) {
-      // Определяем, кто из двоих клиент
       const clientId = link.clientId;
 
-      // Берём уже существующую логику суммирования за день
       const daySummary = await this.mealsService.getMealsSummaryForDay(
         date,
         clientId,
       );
 
-      // Если хочешь не отдавать тренеру все приёмы пищи — можно выкинуть meals
       nutrition = {
         date: daySummary.date,
         summary: daySummary.summary,
         goals: daySummary.goals,
-        // meals: daySummary.meals, // если всё-таки нужно отдать и список
       } as RelationView['nutrition'];
     }
 
@@ -182,12 +197,21 @@ export class ClientCoachService {
         name: partner.name,
         about: partner.about,
         avatar: partner.avatar,
+        rating: isPartnerCoachInThisRelation
+          ? {
+              avg: coachProfile?.ratingAvg ?? 0,
+              count: coachProfile?.ratingCount ?? 0,
+            }
+          : null,
       },
       relation: {
         id: link.id,
         isActive: !!link.isActive,
         activatedAt: link.activatedAt ?? null,
         deactivatedAt: link.deactivatedAt ?? null,
+        sessionsTotal: link.sessionsTotal ?? 0,
+        sessionsUsed: link.sessionsUsed ?? 0,
+        sessionsRemaining: link.sessionsRemaining ?? 0,
       },
       chat: chatBlock,
       billing,

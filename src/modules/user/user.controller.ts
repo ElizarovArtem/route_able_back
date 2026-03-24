@@ -5,6 +5,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   UploadedFile,
   UseGuards,
@@ -21,6 +22,8 @@ import { CurrentUser } from '../../config/decorators/current-user.decorator';
 import { UpdatePersonalGoalsDto } from './dto/update-personal-goals.dto';
 import * as multer from 'multer';
 import { CalcCaloriesDto } from './dto/analyze-tdee.dto';
+import { CoachListItem } from '../../config/interfaces/user';
+import { Public } from '../../config/decorators/public.decorator';
 
 const memoryStorage = multer.memoryStorage();
 
@@ -34,15 +37,15 @@ export class UserController {
     return this.userService.create(userData);
   }
 
+  @Get('coaches')
+  @Public()
+  getCoaches(@Query('userId') userId?: string): Promise<CoachListItem[]> {
+    return this.userService.getCoaches(userId);
+  }
+
   @Get()
   findAll(): Promise<User[]> {
     return this.userService.findAll();
-  }
-
-  @Get('coaches')
-  getCoaches(@Req() req: Request): Promise<User[]> {
-    const user = req.user as User;
-    return this.userService.getCoaches(user.id);
   }
 
   @Get(':phone')

@@ -9,6 +9,7 @@ import { Optional } from '@nestjs/common';
 export enum AuthChannel {
   SMS = 'sms',
   EMAIL = 'email',
+  TELEGRAM = 'telegram',
 }
 
 @Entity('auth_codes')

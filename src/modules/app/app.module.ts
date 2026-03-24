@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ScheduleModule } from '@nestjs/schedule';
 import { UserModule } from '../user/user.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from '../../entities/user.entity';
@@ -20,13 +21,25 @@ import { PlannedMeal } from '../../entities/planned-meal.entity';
 import { PlannedExercisesModule } from '../plannedExercises/plannedExercises.module';
 import { PlannedExercise } from '../../entities/planned-exercise.entity';
 import { ExerciseLog } from '../../entities/exercise-log.entity';
-import { VideoLessonsModule } from '../videoLessons/videoLessons.module';
 import { VideoModule } from '../video/video.module';
-import { VideoLesson } from '../../entities/video-lesson.entity';
 import { TimeSlotsModule } from '../timeSlots/timeSlots.module';
 import { TimeSlot } from '../../entities/time-slot.entity';
 import { WorkoutSession } from '../../entities/workout-session.entity';
 import { WorkoutExercise } from '../../entities/workout-exercise.entity';
+import { CoachVerificationRequest } from '../../entities/coach-verification.entity';
+import { CoachVerificationModule } from '../coachVerification/coachVerification.module';
+import { CoachReviewsModule } from '../coachReview/coachReview.module';
+import { CoachReview } from '../../entities/coach-review.entity';
+import { CoachProfile } from '../../entities/coach-profile.entity';
+import { Purchase } from '../../entities/purchase.entity';
+import { CoachBillingModule } from '../coachBilling/coachBilling.module';
+import { PaymentsModule } from '../payment/payments.module';
+import { ClientCoachTransaction } from '../../entities/client-coach-transaction.entity';
+import { CoachOffer } from '../../entities/coach-offer.entity';
+import { CoachOrder } from '../../entities/coach-order.entity';
+import { CoachWorkoutSessionsModule } from '../coachWorkoutSessions/coachWorkoutSessions.module';
+import { CoachWorkoutSessions } from '../../entities/coach-workout-sessions';
+import { CoachPayment } from '../../entities/coach-payments';
 
 @Module({
   imports: [
@@ -34,6 +47,7 @@ import { WorkoutExercise } from '../../entities/workout-exercise.entity';
       envFilePath: '.env',
       isGlobal: true,
     }),
+    ScheduleModule.forRoot(),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -56,10 +70,18 @@ import { WorkoutExercise } from '../../entities/workout-exercise.entity';
           PlannedMeal,
           PlannedExercise,
           ExerciseLog,
-          VideoLesson,
+          CoachPayment,
+          CoachWorkoutSessions,
           TimeSlot,
           WorkoutSession,
           WorkoutExercise,
+          CoachVerificationRequest,
+          CoachReview,
+          CoachProfile,
+          Purchase,
+          ClientCoachTransaction,
+          CoachOffer,
+          CoachOrder,
         ],
         synchronize: true, // Только для разработки
       }),
@@ -73,9 +95,13 @@ import { WorkoutExercise } from '../../entities/workout-exercise.entity';
     ClientCoachModule,
     PlannedMealsModule,
     PlannedExercisesModule,
-    VideoLessonsModule,
     VideoModule,
     TimeSlotsModule,
+    CoachWorkoutSessionsModule,
+    CoachVerificationModule,
+    CoachReviewsModule,
+    CoachBillingModule,
+    PaymentsModule,
   ],
   controllers: [],
   providers: [],

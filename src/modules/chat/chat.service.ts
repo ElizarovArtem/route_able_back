@@ -16,6 +16,13 @@ export class ChatService {
     private readonly relations: ClientCoachService,
   ) {}
 
+  async assertParticipant(userId: string, chatId: string) {
+    const isParticipant = await this.chatParticipantRepository.findOne({
+      where: { chatId, userId },
+    });
+    if (!isParticipant) throw new ForbiddenException('Не участник чата');
+  }
+
   async startChat(initiatorId: string, otherUserId: string) {
     const link = await this.relations.ensureLinkWithCoach(
       initiatorId,

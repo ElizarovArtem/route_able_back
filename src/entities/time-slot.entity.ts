@@ -8,8 +8,6 @@ import {
   Index,
 } from 'typeorm';
 import { User } from './user.entity';
-import { ClientCoach } from './client-coach.entity';
-import { VideoLesson } from './video-lesson.entity';
 
 export enum TimeSlotStatus {
   FREE = 'FREE',
@@ -33,14 +31,6 @@ export class TimeSlot {
   @JoinColumn({ name: 'coachId' })
   coach: User;
 
-  // слот может быть общим или для конкретной пары
-  @Column('uuid', { nullable: true })
-  clientCoachId: string | null;
-
-  @ManyToOne(() => ClientCoach, { onDelete: 'CASCADE', nullable: true })
-  @JoinColumn({ name: 'clientCoachId' })
-  relation?: ClientCoach | null;
-
   @Column('timestamptz')
   startAt: Date;
 
@@ -53,13 +43,6 @@ export class TimeSlot {
     default: TimeSlotStatus.FREE,
   })
   status: TimeSlotStatus;
-
-  @Column('uuid', { nullable: true })
-  videoLessonId: string | null;
-
-  @ManyToOne(() => VideoLesson, { nullable: true, onDelete: 'SET NULL' })
-  @JoinColumn({ name: 'videoLessonId' })
-  videoLesson?: VideoLesson | null;
 
   @CreateDateColumn()
   createdAt: Date;

@@ -6,7 +6,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { AccessToken } from 'livekit-server-sdk';
 import { ClientCoachService } from '../clientCoach/clientCoach.service';
-import { VideoLessonsService } from '../videoLessons/videoLessons.service';
+import { CoachWorkoutSessionsService } from '../coachWorkoutSessions/coachWorkoutSessions.service';
 
 type GetTokenOpts = { requireActive?: boolean };
 
@@ -19,7 +19,7 @@ export class VideoChatService {
   constructor(
     private readonly config: ConfigService,
     private readonly clientCoach: ClientCoachService,
-    private readonly lessons: VideoLessonsService,
+    private readonly sessions: CoachWorkoutSessionsService,
   ) {
     this.apiKey = this.config.get<string>('LIVEKIT_API_KEY', '');
     this.apiSecret = this.config.get<string>('LIVEKIT_API_SECRET', '');
@@ -45,14 +45,14 @@ export class VideoChatService {
           relationId,
         );
 
-    const { lesson } = await this.lessons.canJoin(user.id, relationId);
-    if (!lesson) {
+    const { session } = await this.sessions.canJoin(user.id, relationId);
+    if (!session) {
       throw new ForbiddenException(
         'Доступ к видеочату разрешён только в окно урока',
       );
     }
 
-    const roomName = lesson.id;
+    const roomName = session.id;
     const meRole = user.id === link.coachId ? 'coach' : 'client';
 
     const at = new AccessToken(this.apiKey, this.apiSecret, {
@@ -72,7 +72,7 @@ export class VideoChatService {
       url: this.wsUrl,
       room: roomName,
       meRole,
-      lessonId: lesson.id,
+      lessonId: session.id,
     };
   }
 

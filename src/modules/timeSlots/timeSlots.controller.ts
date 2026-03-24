@@ -39,11 +39,7 @@ export class TimeSlotsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @RolesDecorator(Roles.Client)
   @Post('slots/:id/book')
-  bookSlot(
-    @CurrentUser('id') clientId: string,
-    @Param('id') slotId: string,
-    @Body() dto: BookSlotDto,
-  ) {
-    return this.timeSlotsService.clientBookSlot(clientId, slotId, dto);
+  bookSlot(@CurrentUser('id') clientId: string, @Param('id') slotId: string) {
+    return this.timeSlotsService.clientBookSlot(clientId, slotId);
   }
 }

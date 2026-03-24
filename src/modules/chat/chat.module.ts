@@ -8,6 +8,9 @@ import { User } from '../../entities/user.entity';
 import { ChatService } from './chat.service';
 import { ChatController } from './chat.controller';
 import { ClientCoachModule } from '../clientCoach/clientCoach.module';
+import { ChatGateway } from './chat.gateway';
+import { WsJwtGuard } from '../../libs/guards/ws-jwt.guard';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
@@ -21,7 +24,7 @@ import { ClientCoachModule } from '../clientCoach/clientCoach.module';
     ClientCoachModule,
   ],
   controllers: [ChatController],
-  providers: [ChatService],
+  providers: [ChatService, ChatGateway, WsJwtGuard],
   exports: [ChatService],
 })
 export class ChatModule {}

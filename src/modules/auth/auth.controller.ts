@@ -24,14 +24,14 @@ export class AuthController {
     this.domain = config.get('DOMAIN');
   }
 
-  @Post('request-code')
-  requestCode(@Body() dto: RequestCodeDto) {
-    return this.authService.requestCode(dto.phone);
-  }
-
   @Post('request-code-email')
   requestCodeByEmail(@Body() dto: RequestEmailCodeDto) {
     return this.authService.requestEmailCode(dto.email);
+  }
+
+  @Post('request-code-telegram')
+  requestCodeByTelegram(@Body() dto: RequestCodeDto) {
+    return this.authService.requestTelegramCode(dto.phone);
   }
 
   @Post('login')
