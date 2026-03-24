@@ -5,11 +5,9 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between, DataSource, In } from 'typeorm';
+import { Repository, Between, DataSource, In, EntityManager } from 'typeorm';
 import { TimeSlot, TimeSlotStatus } from '../../entities/time-slot.entity';
 import { ClientCoach } from '../../entities/client-coach.entity';
-import { VideoLesson, LessonStatus } from '../../entities/video-lesson.entity';
-import { User } from '../../entities/user.entity';
 import { CreateSlotDto } from './dto/create-slot.dto';
 import { DayQueryDto } from './dto/day-query.dto';
 import { CoachBookSlotDto } from './dto/coach-book-slot.dto';
@@ -40,9 +38,19 @@ export class TimeSlotsService {
   // ====== ВСПОМОГАТЕЛЬНОЕ ======
 
   private getDayRange(date: string): { from: Date; to: Date } {
-    // простой вариант без часовых поясов: считаем, что date в UTC
-    const from = new Date(`${date}T00:00:00.000Z`);
-    const to = new Date(`${date}T23:59:59.999Z`);
+    const [year, month, day] = date.split('-').map((part) => Number(part));
+    if (
+      !year ||
+      Number.isNaN(year) ||
+      !month ||
+      Number.isNaN(month) ||
+      !day ||
+      Number.isNaN(day)
+    ) {
+      throw new BadRequestException('Invalid date');
+    }
+    const from = new Date(year, month - 1, day, 0, 0, 0, 0);
+    const to = new Date(year, month - 1, day, 23, 59, 59, 999);
     return { from, to };
   }
 
@@ -194,17 +202,7 @@ export class TimeSlotsService {
         throw new BadRequestException('Cannot book slot in the past');
       }
 
-      const order = await manager.findOne(CoachOrder, {
-        where: {
-          clientCoachId: relation.id,
-          status: CoachOrderStatus.PAID,
-        },
-        order: {
-          paidAt: 'ASC',
-          createdAt: 'ASC',
-        },
-      });
-
+      const order = await this.findAvailableOrder(manager, relation.id);
       if (!order) {
         throw new BadRequestException('No paid order available for booking');
       }
@@ -241,6 +239,8 @@ export class TimeSlotsService {
       relation.isActive =
         relation.sessionsRemaining > 0 || relation.sessionsReserved > 0;
 
+      order.sessionsReserved += 1;
+      await manager.save(order);
       await manager.save(relation);
 
       const trx = manager.create(ClientCoachTransaction, {
@@ -266,41 +266,74 @@ export class TimeSlotsService {
     query: DayQueryDto,
   ) {
     const { from, to } = this.getDayRange(query.date);
+    const now = new Date();
 
-    // активная пара (если есть)
-    const relation = await this.clientCoachRepo.findOne({
-      where: { clientId, coachId, isActive: true },
+    const slots = await this.slotsRepo.find({
+      where: {
+        coachId,
+        startAt: Between(from, to),
+      },
+      order: { startAt: 'ASC' },
     });
 
-    const qb = this.slotsRepo
-      .createQueryBuilder('slot')
-      .leftJoinAndSelect('slot.videoLesson', 'lesson')
-      .leftJoinAndSelect('slot.relation', 'relation')
-      .where('slot.coachId = :coachId', { coachId })
-      .andWhere('slot.startAt BETWEEN :from AND :to', { from, to })
-      .orderBy('slot.startAt', 'ASC');
+    const upcomingSlots = slots.filter((slot) => slot.startAt >= now);
 
-    // Клиент видит:
-    //  - свободные публичные слоты
-    //  - свободные слоты, привязанные к его паре
-    //  - свои уже забронированные слоты
-    qb.andWhere(
-      `
-      (
-        (slot.status = :freeStatus AND (slot.clientCoachId IS NULL ${
-          relation ? 'OR slot.clientCoachId = :relId' : ''
-        }))
-      )
-    `,
-      {
-        freeStatus: TimeSlotStatus.FREE,
-        bookedStatus: TimeSlotStatus.BOOKED,
-        clientId,
-        ...(relation && { relId: relation.id }),
+    if (!upcomingSlots.length) {
+      return [];
+    }
+
+    const slotIds = upcomingSlots.map((slot) => slot.id);
+
+    const sessions = await this.coachWorkoutSessionsRepo.find({
+      where: {
+        timeSlotId: In(slotIds),
       },
+      relations: {
+        client: true,
+      },
+    });
+
+    const sessionBySlotId = new Map(
+      sessions.map((session) => [session.timeSlotId, session]),
     );
 
-    return qb.getMany();
+    return upcomingSlots
+      .filter((slot) => {
+        const session = sessionBySlotId.get(slot.id);
+
+        // свободные слоты доступны всем
+        if (slot.status === TimeSlotStatus.FREE) {
+          return true;
+        }
+
+        // занятый слот показываем только тому клиенту, который его забронировал
+        if (
+          slot.status === TimeSlotStatus.BOOKED &&
+          session?.clientId === clientId
+        ) {
+          return true;
+        }
+
+        return false;
+      })
+      .map((slot) => {
+        const session = sessionBySlotId.get(slot.id);
+
+        return {
+          ...slot,
+          bookedSession:
+            session && session.clientId === clientId
+              ? {
+                  id: session.id,
+                  status: session.status,
+                  clientId: session.clientId,
+                  client: session.client,
+                  orderId: session.orderId,
+                  scheduledAt: session.scheduledAt,
+                }
+              : null,
+        };
+      });
   }
 
   async clientBookSlot(clientId: string, slotId: string) {
@@ -339,17 +372,7 @@ export class TimeSlotsService {
         throw new BadRequestException('No remaining sessions');
       }
 
-      const order = await manager.findOne(CoachOrder, {
-        where: {
-          clientCoachId: relation.id,
-          status: CoachOrderStatus.PAID,
-        },
-        order: {
-          paidAt: 'ASC',
-          createdAt: 'ASC',
-        },
-      });
-
+      const order = await this.findAvailableOrder(manager, relation.id);
       if (!order) {
         throw new BadRequestException('No paid order available for booking');
       }
@@ -386,6 +409,8 @@ export class TimeSlotsService {
       relation.isActive =
         relation.sessionsRemaining > 0 || relation.sessionsReserved > 0;
 
+      order.sessionsReserved += 1;
+      await manager.save(order);
       await manager.save(relation);
 
       const trx = manager.create(ClientCoachTransaction, {
@@ -401,5 +426,22 @@ export class TimeSlotsService {
 
       return savedSession;
     });
+  }
+
+  private findAvailableOrder(manager: EntityManager, relationId: string) {
+    return manager
+      .getRepository(CoachOrder)
+      .createQueryBuilder('order')
+      .setLock('pessimistic_write')
+      .where('order.clientCoachId = :relationId', { relationId })
+      .andWhere('order.status = :status', {
+        status: CoachOrderStatus.PAID,
+      })
+      .andWhere(
+        '(order.sessionsReserved + order.sessionsUsed) < order.sessionCount',
+      )
+      .orderBy('order.paidAt', 'ASC')
+      .addOrderBy('order.createdAt', 'ASC')
+      .getOne();
   }
 }

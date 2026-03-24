@@ -8,7 +8,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { CoachOrder } from '../../entities/coach-order.entity';
 import { PAYMENT_PROVIDER } from '../../config/constants/payments';
-import { PaymentProvider } from '../../config/interfaces/payments';
+import {
+  ParsedWebhookEvent,
+  PaymentProvider,
+} from '../../config/interfaces/payments';
 import { CoachBillingService } from '../coachBilling/coachBilling.service';
 import {
   CoachOrderStatus,
@@ -111,6 +114,14 @@ export class PaymentsService {
   async handleWebhook(payload: unknown, headers?: Record<string, string>) {
     const event = await this.paymentProvider.parseWebhook(payload, headers);
 
+    if (event.objectType === 'COACH_PAYOUT') {
+      return this.handlePayoutWebhook(event);
+    }
+
+    return this.handleOrderPaymentWebhook(event);
+  }
+
+  private async handleOrderPaymentWebhook(event: ParsedWebhookEvent) {
     return this.dataSource.transaction(async (manager) => {
       const paymentRepo = manager.getRepository(CoachPayment);
       const orderRepo = manager.getRepository(CoachOrder);
@@ -193,6 +204,40 @@ export class PaymentsService {
 
         return { ok: true };
       }
+
+      return { ok: true };
+    });
+  }
+
+  private async handlePayoutWebhook(event: ParsedWebhookEvent) {
+    return this.dataSource.transaction(async (manager) => {
+      const paymentRepo = manager.getRepository(CoachPayment);
+
+      const payment = await paymentRepo.findOne({
+        where: {
+          providerExternalId: event.externalPaymentId,
+          type: CoachPaymentType.COACH_PAYOUT,
+        },
+      });
+
+      if (!payment) {
+        throw new NotFoundException('Payout not found');
+      }
+
+      if (event.status === 'PAID') {
+        payment.status = CoachPaymentStatus.SUCCEEDED;
+        payment.paidOutAt = new Date();
+      } else if (event.status === 'FAILED') {
+        payment.status = CoachPaymentStatus.FAILED;
+        payment.failReason = 'Payout failed via webhook';
+      } else if (event.status === 'CANCELED') {
+        payment.status = CoachPaymentStatus.CANCELED;
+      } else if (event.status === 'REFUNDED') {
+        payment.status = CoachPaymentStatus.REFUNDED;
+        payment.refundedAt = new Date();
+      }
+
+      await paymentRepo.save(payment);
 
       return { ok: true };
     });

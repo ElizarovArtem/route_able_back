@@ -57,6 +57,12 @@ export class CoachOrder {
   @Column({ type: 'char', length: 3, default: 'RUB' })
   currency: string;
 
+  @Column({ type: 'int', default: 0 })
+  sessionsUsed: number;
+
+  @Column({ type: 'int', default: 0 })
+  sessionsReserved: number;
+
   @Column({ nullable: true })
   paymentProvider?: string | null;
 

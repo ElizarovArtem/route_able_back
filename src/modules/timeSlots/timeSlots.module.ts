@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TimeSlot } from '../../entities/time-slot.entity';
 import { ClientCoach } from '../../entities/client-coach.entity';
-import { VideoLesson } from '../../entities/video-lesson.entity';
 import { User } from '../../entities/user.entity';
 import { TimeSlotsService } from './timeSlots.service';
 import { TimeSlotsController } from './timeSlots.controller';
@@ -14,7 +13,6 @@ import { CoachWorkoutSessions } from '../../entities/coach-workout-sessions';
     TypeOrmModule.forFeature([
       TimeSlot,
       ClientCoach,
-      VideoLesson,
       User,
       CoachWorkoutSessions,
     ]),

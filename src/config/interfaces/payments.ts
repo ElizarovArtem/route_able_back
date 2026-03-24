@@ -25,6 +25,7 @@ export interface ParsedWebhookEvent {
   externalPaymentId: string;
   status: ExternalPaymentStatus;
   raw?: unknown;
+  objectType?: 'ORDER_PAYMENT' | 'COACH_PAYOUT';
 }
 
 export interface PaymentProvider {
@@ -35,4 +36,22 @@ export interface PaymentProvider {
     payload: unknown,
     headers?: Record<string, string>,
   ): Promise<ParsedWebhookEvent>;
+  createCoachPayout(
+    input: CreateCoachPayoutInput,
+  ): Promise<CreateCoachPayoutResult>;
+}
+
+export interface CreateCoachPayoutInput {
+  coachId: string;
+  clientId: string;
+  orderId: string;
+  sessionId: string;
+  amount: number;
+  currency: string;
+}
+
+export interface CreateCoachPayoutResult {
+  externalPayoutId: string;
+  provider?: string;
+  raw?: unknown;
 }

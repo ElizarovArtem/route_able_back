@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ScheduleModule } from '@nestjs/schedule';
 import { UserModule } from '../user/user.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from '../../entities/user.entity';
@@ -20,9 +21,7 @@ import { PlannedMeal } from '../../entities/planned-meal.entity';
 import { PlannedExercisesModule } from '../plannedExercises/plannedExercises.module';
 import { PlannedExercise } from '../../entities/planned-exercise.entity';
 import { ExerciseLog } from '../../entities/exercise-log.entity';
-import { VideoLessonsModule } from '../videoLessons/videoLessons.module';
 import { VideoModule } from '../video/video.module';
-import { VideoLesson } from '../../entities/video-lesson.entity';
 import { TimeSlotsModule } from '../timeSlots/timeSlots.module';
 import { TimeSlot } from '../../entities/time-slot.entity';
 import { WorkoutSession } from '../../entities/workout-session.entity';
@@ -38,6 +37,9 @@ import { PaymentsModule } from '../payment/payments.module';
 import { ClientCoachTransaction } from '../../entities/client-coach-transaction.entity';
 import { CoachOffer } from '../../entities/coach-offer.entity';
 import { CoachOrder } from '../../entities/coach-order.entity';
+import { CoachWorkoutSessionsModule } from '../coachWorkoutSessions/coachWorkoutSessions.module';
+import { CoachWorkoutSessions } from '../../entities/coach-workout-sessions';
+import { CoachPayment } from '../../entities/coach-payments';
 
 @Module({
   imports: [
@@ -45,6 +47,7 @@ import { CoachOrder } from '../../entities/coach-order.entity';
       envFilePath: '.env',
       isGlobal: true,
     }),
+    ScheduleModule.forRoot(),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -67,7 +70,8 @@ import { CoachOrder } from '../../entities/coach-order.entity';
           PlannedMeal,
           PlannedExercise,
           ExerciseLog,
-          VideoLesson,
+          CoachPayment,
+          CoachWorkoutSessions,
           TimeSlot,
           WorkoutSession,
           WorkoutExercise,
@@ -91,9 +95,9 @@ import { CoachOrder } from '../../entities/coach-order.entity';
     ClientCoachModule,
     PlannedMealsModule,
     PlannedExercisesModule,
-    VideoLessonsModule,
     VideoModule,
     TimeSlotsModule,
+    CoachWorkoutSessionsModule,
     CoachVerificationModule,
     CoachReviewsModule,
     CoachBillingModule,

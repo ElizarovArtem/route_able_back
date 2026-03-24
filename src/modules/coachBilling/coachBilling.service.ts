@@ -109,6 +109,8 @@ export class CoachBillingService {
         sessionCount: offer.sessionCount,
         amount: offer.price,
         currency: offer.currency,
+        sessionsUsed: 0,
+        sessionsReserved: 0,
       });
 
       await orderRepo.save(order);

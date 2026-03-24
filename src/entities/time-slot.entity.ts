@@ -8,8 +8,6 @@ import {
   Index,
 } from 'typeorm';
 import { User } from './user.entity';
-import { ClientCoach } from './client-coach.entity';
-import { VideoLesson } from './video-lesson.entity';
 
 export enum TimeSlotStatus {
   FREE = 'FREE',
