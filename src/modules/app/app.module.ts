@@ -40,6 +40,8 @@ import { CoachOrder } from '../../entities/coach-order.entity';
 import { CoachWorkoutSessionsModule } from '../coachWorkoutSessions/coachWorkoutSessions.module';
 import { CoachWorkoutSessions } from '../../entities/coach-workout-sessions';
 import { CoachPayment } from '../../entities/coach-payments';
+import { Feedback } from '../../entities/feedback.entity';
+import { FeedbackModule } from '../feedback/feedback.module';
 
 @Module({
   imports: [
@@ -82,6 +84,7 @@ import { CoachPayment } from '../../entities/coach-payments';
           ClientCoachTransaction,
           CoachOffer,
           CoachOrder,
+          Feedback,
         ],
         synchronize: true, // Только для разработки
       }),
@@ -102,6 +105,7 @@ import { CoachPayment } from '../../entities/coach-payments';
     CoachReviewsModule,
     CoachBillingModule,
     PaymentsModule,
+    FeedbackModule,
   ],
   controllers: [],
   providers: [],
