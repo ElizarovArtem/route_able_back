@@ -28,6 +28,7 @@ import {
   ClientCoachTransactionType,
 } from '../../config/emuns/coach-billing';
 import { ClientCoachService } from '../clientCoach/clientCoach.service';
+import { ListClientUpcomingSessionsQueryDto } from './dto/list-client-upcoming.query';
 import { PAYMENT_PROVIDER } from '../../config/constants/payments';
 import { PaymentProvider } from '../../config/interfaces/payments';
 
@@ -99,14 +100,65 @@ export class CoachWorkoutSessionsService {
 
   async listForCoachByDay(coachId: string, date: string) {
     const { from, to } = this.getDayRange(date);
-    return this.sessionsRepo.find({
-      where: {
-        coachId,
-        scheduledAt: Between(from, to),
-      },
-      relations: { client: true },
-      order: { scheduledAt: 'ASC' },
-    });
+    const qb = this.sessionsRepo
+      .createQueryBuilder('session')
+      .leftJoinAndSelect('session.client', 'client')
+      .where('session.coachId = :coachId', { coachId })
+      .andWhere('session.scheduledAt BETWEEN :from AND :to', { from, to })
+      .orderBy('session.scheduledAt', 'ASC');
+
+    const items = await qb.getMany();
+    return {
+      items,
+      total: items.length,
+      skip: 0,
+      take: items.length,
+    };
+  }
+
+  async listUpcomingForClient(
+    clientId: string,
+    query: ListClientUpcomingSessionsQueryDto,
+  ) {
+    const from =
+      query.from && query.from.trim().length
+        ? new Date(query.from)
+        : new Date();
+    if (Number.isNaN(from.getTime())) {
+      throw new BadRequestException('Invalid from date');
+    }
+
+    const skip = query.skip ?? 0;
+    const take = Math.min(query.take ?? 20, 100);
+
+    const excludedStatuses = [
+      CoachWorkoutSessionStatus.CANCELLED_BY_CLIENT,
+      CoachWorkoutSessionStatus.CANCELLED_BY_COACH,
+      CoachWorkoutSessionStatus.CONFIRMED_BY_CLIENT,
+      CoachWorkoutSessionStatus.AUTO_CONFIRMED,
+    ];
+
+    const qb = this.sessionsRepo
+      .createQueryBuilder('session')
+      .leftJoinAndSelect('session.coach', 'coach')
+      .leftJoinAndSelect('session.clientCoach', 'relation')
+      .where('session.clientId = :clientId', { clientId })
+      .andWhere('session.status NOT IN (:...excluded)', {
+        excluded: excludedStatuses,
+      })
+      .andWhere('session.scheduledAt >= :from', { from })
+      .orderBy('session.scheduledAt', 'ASC')
+      .skip(skip)
+      .take(take);
+
+    const [items, total] = await qb.getManyAndCount();
+
+    return {
+      items,
+      total,
+      skip,
+      take,
+    };
   }
 
   async cancelSession(

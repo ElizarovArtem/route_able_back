@@ -15,6 +15,7 @@ import { RolesGuard } from '../../libs/guards/roles.guard';
 import { RolesDecorator } from '../../config/decorators/roles.decorator';
 import { Roles } from '../../config/emuns/user';
 import { DayQueryDto } from '../timeSlots/dto/day-query.dto';
+import { ListClientUpcomingSessionsQueryDto } from './dto/list-client-upcoming.query';
 
 @Controller('coach-workout-sessions')
 @UseGuards(JwtAuthGuard)
@@ -37,6 +38,16 @@ export class CoachWorkoutSessionsController {
     @Query() query: DayQueryDto,
   ) {
     return this.sessions.listForCoachByDay(coachId, query.date);
+  }
+
+  @Get('client/upcoming')
+  @UseGuards(RolesGuard)
+  @RolesDecorator(Roles.Client)
+  listUpcomingForClient(
+    @CurrentUser('id') clientId: string,
+    @Query() query: ListClientUpcomingSessionsQueryDto,
+  ) {
+    return this.sessions.listUpcomingForClient(clientId, query);
   }
 
   @Post(':sessionId/cancel')

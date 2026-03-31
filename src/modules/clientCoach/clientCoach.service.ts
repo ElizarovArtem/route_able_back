@@ -243,6 +243,14 @@ export class ClientCoachService {
       const amClient = relation.clientId === meId;
       const partnerId = amClient ? relation.coachId : relation.clientId;
       const partner = partnerById.get(partnerId);
+      const sessions = amClient
+        ? {
+            total: relation.sessionsTotal ?? 0,
+            used: relation.sessionsUsed ?? 0,
+            remaining: relation.sessionsRemaining ?? 0,
+            reserved: relation.sessionsReserved ?? 0,
+          }
+        : null;
 
       return {
         myRole: amClient ? Roles.Client : Roles.Coach,
@@ -255,6 +263,7 @@ export class ClientCoachService {
           avatar: partner.avatar ?? null,
         },
         isActive: !!relation.isActive,
+        sessions,
       };
     });
   }
