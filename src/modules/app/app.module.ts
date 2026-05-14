@@ -42,6 +42,11 @@ import { CoachWorkoutSessions } from '../../entities/coach-workout-sessions';
 import { CoachPayment } from '../../entities/coach-payments';
 import { Feedback } from '../../entities/feedback.entity';
 import { FeedbackModule } from '../feedback/feedback.module';
+import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
+import { SubscriptionPlan } from '../../entities/subscription-plan.entity';
+import { UserSubscription } from '../../entities/user-subscription.entity';
+import { SubscriptionPayment } from '../../entities/subscription-payment.entity';
+import { FeatureUsage } from '../../entities/feature-usage.entity';
 
 @Module({
   imports: [
@@ -85,6 +90,10 @@ import { FeedbackModule } from '../feedback/feedback.module';
           CoachOffer,
           CoachOrder,
           Feedback,
+          SubscriptionPlan,
+          UserSubscription,
+          SubscriptionPayment,
+          FeatureUsage,
         ],
         synchronize: true, // Только для разработки
       }),
@@ -106,6 +115,7 @@ import { FeedbackModule } from '../feedback/feedback.module';
     CoachBillingModule,
     PaymentsModule,
     FeedbackModule,
+    SubscriptionsModule,
   ],
   controllers: [],
   providers: [],

@@ -7,10 +7,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { WorkoutSession } from '../../entities/workout-session.entity';
 import { WorkoutExercise } from '../../entities/workout-exercise.entity';
 import { User } from '../../entities/user.entity';
+import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
 
 @Module({
   imports: [
     ConfigModule,
+    SubscriptionsModule,
     TypeOrmModule.forFeature([WorkoutSession, WorkoutExercise, User]),
   ],
   providers: [GigaChatService, WorkoutService],

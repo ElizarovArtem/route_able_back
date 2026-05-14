@@ -13,6 +13,9 @@ import {
 } from '../../config/emuns/ai-workout';
 import { normalizeExerciseKeyFromAi } from '../../config/constants/ai-workout';
 import { WorkoutHistoryItemDto } from './dto/workout-history.dto';
+import { SubscriptionAccessService } from '../subscriptions/subscription-access.service';
+import { FeatureUsageService } from '../subscriptions/feature-usage.service';
+import { PaidFeature } from '../../config/emuns/subscription';
 
 @Injectable()
 export class WorkoutService {
@@ -25,6 +28,8 @@ export class WorkoutService {
     private readonly usersRepo: Repository<User>,
     private readonly gigaChat: GigaChatService,
     private readonly dataSource: DataSource,
+    private readonly subscriptionAccessService: SubscriptionAccessService,
+    private readonly featureUsageService: FeatureUsageService,
   ) {}
 
   private today(): string {
@@ -34,6 +39,11 @@ export class WorkoutService {
   // --- 1. Генерация плана на сегодня через GigaChat ---
 
   async createPlanForToday(userId: string, dto: CreateWorkoutPlanDto) {
+    await this.subscriptionAccessService.assertCanUseFeature(
+      userId,
+      PaidFeature.AI_WORKOUT_GENERATION,
+    );
+
     const user = await this.usersRepo.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
 
@@ -51,7 +61,7 @@ export class WorkoutService {
       temperature: 0.4,
       maxTokens: 800,
     });
-    console.log(raw);
+
     let parsed: any;
     try {
       parsed = JSON.parse(raw);
@@ -64,33 +74,49 @@ export class WorkoutService {
       throw new Error('Empty exercises list from GigaChat');
     }
 
-    const session = this.sessionsRepo.create({
+    const limit = await this.subscriptionAccessService.getFeatureLimit(
       userId,
-      date: this.today(),
-      status: WorkoutStatus.PLANNED,
-      userIntent: dto.intent ?? null,
-      energyLevel: dto.energyLevel,
-      sleepQuality: dto.sleepQuality,
-      nutritionQuality: dto.nutritionQuality,
-      weightGoalSnapshot: user.weightGoal ?? null,
-      modelRaw: parsed,
-      currentExerciseIndex: 0,
-      sourceSessionId: null,
-      exercises: exercises.map((ex: any, idx: number) =>
-        this.exercisesRepo.create({
-          order: idx,
-          name: ex.name,
-          exerciseKey: normalizeExerciseKeyFromAi(ex.exerciseKey),
-          targetMuscle: ex.targetMuscle ?? null,
-          setsPlanned: ex.sets ?? 3,
-          repsPerSet: ex.reps ?? 10,
-          restSeconds: ex.restSeconds ?? 60,
-          notes: ex.notes ?? null,
-        }),
-      ),
-    });
+      PaidFeature.AI_WORKOUT_GENERATION,
+    );
 
-    return this.sessionsRepo.save(session);
+    return this.dataSource.transaction(async (manager) => {
+      const sessionRepo = manager.getRepository(WorkoutSession);
+      const session = sessionRepo.create({
+        userId,
+        date: this.today(),
+        status: WorkoutStatus.PLANNED,
+        userIntent: dto.intent ?? null,
+        energyLevel: dto.energyLevel,
+        sleepQuality: dto.sleepQuality,
+        nutritionQuality: dto.nutritionQuality,
+        weightGoalSnapshot: user.weightGoal ?? null,
+        modelRaw: parsed,
+        currentExerciseIndex: 0,
+        sourceSessionId: null,
+        exercises: exercises.map((ex: any, idx: number) =>
+          this.exercisesRepo.create({
+            order: idx,
+            name: ex.name,
+            exerciseKey: normalizeExerciseKeyFromAi(ex.exerciseKey),
+            targetMuscle: ex.targetMuscle ?? null,
+            setsPlanned: ex.sets ?? 3,
+            repsPerSet: ex.reps ?? 10,
+            restSeconds: ex.restSeconds ?? 60,
+            notes: ex.notes ?? null,
+          }),
+        ),
+      });
+
+      const savedSession = await sessionRepo.save(session);
+
+      await this.featureUsageService.consume(
+        userId,
+        PaidFeature.AI_WORKOUT_GENERATION,
+        limit,
+      );
+
+      return savedSession;
+    });
   }
 
   async getLastSessionByTemplate(userId: string, templateId: string) {

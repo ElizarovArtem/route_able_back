@@ -9,6 +9,7 @@ import { ConfigModule } from '@nestjs/config';
 import { ClientCoach } from '../../entities/client-coach.entity';
 import { User } from '../../entities/user.entity';
 import { AiModule } from '../ai/ai.module';
+import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { AiModule } from '../ai/ai.module';
     DayModule,
     ConfigModule,
     AiModule,
+    SubscriptionsModule,
   ],
   controllers: [MealController],
   providers: [MealService],
