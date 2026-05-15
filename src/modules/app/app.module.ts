@@ -47,6 +47,8 @@ import { SubscriptionPlan } from '../../entities/subscription-plan.entity';
 import { UserSubscription } from '../../entities/user-subscription.entity';
 import { SubscriptionPayment } from '../../entities/subscription-payment.entity';
 import { FeatureUsage } from '../../entities/feature-usage.entity';
+import { Product } from '../../entities/product.entity';
+import { ProductsModule } from '../products/products.module';
 
 @Module({
   imports: [
@@ -94,6 +96,7 @@ import { FeatureUsage } from '../../entities/feature-usage.entity';
           UserSubscription,
           SubscriptionPayment,
           FeatureUsage,
+          Product,
         ],
         synchronize: true, // Только для разработки
       }),
@@ -116,6 +119,7 @@ import { FeatureUsage } from '../../entities/feature-usage.entity';
     PaymentsModule,
     FeedbackModule,
     SubscriptionsModule,
+    ProductsModule,
   ],
   controllers: [],
   providers: [],
