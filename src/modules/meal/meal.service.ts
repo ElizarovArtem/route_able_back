@@ -12,6 +12,9 @@ import { CreateMealDto } from './dto/create-meal.dto';
 import { ClientCoach } from '../../entities/client-coach.entity';
 import { GigaChatService } from '../ai/gigachat.service';
 import { AnalyzeMealPhotoDto } from './dto/analyze-meal-photo.dto';
+import { SubscriptionAccessService } from '../subscriptions/subscription-access.service';
+import { FeatureUsageService } from '../subscriptions/feature-usage.service';
+import { PaidFeature } from '../../config/emuns/subscription';
 
 @Injectable()
 export class MealService {
@@ -24,6 +27,8 @@ export class MealService {
     private readonly usersRepo: Repository<User>,
     private readonly dayService: DayService,
     private readonly gigaChat: GigaChatService,
+    private readonly subscriptionAccessService: SubscriptionAccessService,
+    private readonly featureUsageService: FeatureUsageService,
   ) {}
 
   async addMeal(dto: CreateMealDto, user: User): Promise<Meal> {
@@ -126,7 +131,12 @@ export class MealService {
     };
   }
 
-  async analyzeTextMeal(text: string) {
+  async analyzeTextMeal(text: string, userId: string) {
+    await this.subscriptionAccessService.assertCanUseFeature(
+      userId,
+      PaidFeature.AI_FOOD_LOGGING,
+    );
+
     const prompt = `
       Ты — нутрициолог. На основе описания еды оцени примерное количество калорий, белков, жиров и углеводов.
       Верни ТОЛЬКО JSON следующего вида:
@@ -156,6 +166,16 @@ export class MealService {
         throw new Error('Невозможно разобрать JSON');
       }
 
+      const limit = await this.subscriptionAccessService.getFeatureLimit(
+        userId,
+        PaidFeature.AI_FOOD_LOGGING,
+      );
+      await this.featureUsageService.consume(
+        userId,
+        PaidFeature.AI_FOOD_LOGGING,
+        limit,
+      );
+
       return json;
     } catch (error) {
       console.error('GigaChat error:', error?.response?.data || error.message);
@@ -168,7 +188,13 @@ export class MealService {
   async analyzePhotoMeal(
     { weight }: AnalyzeMealPhotoDto,
     photo: Express.Multer.File,
+    userId: string,
   ) {
+    await this.subscriptionAccessService.assertCanUseFeature(
+      userId,
+      PaidFeature.AI_PHOTO_ANALYSIS,
+    );
+
     try {
       const prompt = `
       Ты — нутрициолог. На основе изображения блюда и данных ниже оцени БЖУ и калории.
@@ -195,7 +221,18 @@ export class MealService {
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       if (!jsonMatch) throw new Error('JSON not found in model response');
 
-      return JSON.parse(jsonMatch[0]);
+      const result = JSON.parse(jsonMatch[0]);
+      const limit = await this.subscriptionAccessService.getFeatureLimit(
+        userId,
+        PaidFeature.AI_PHOTO_ANALYSIS,
+      );
+      await this.featureUsageService.consume(
+        userId,
+        PaidFeature.AI_PHOTO_ANALYSIS,
+        limit,
+      );
+
+      return result;
     } catch (e) {
       console.log(e);
       throw new InternalServerErrorException(`GigaChat Vision error: ${e}`);

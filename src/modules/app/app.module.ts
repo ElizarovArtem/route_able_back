@@ -40,6 +40,15 @@ import { CoachOrder } from '../../entities/coach-order.entity';
 import { CoachWorkoutSessionsModule } from '../coachWorkoutSessions/coachWorkoutSessions.module';
 import { CoachWorkoutSessions } from '../../entities/coach-workout-sessions';
 import { CoachPayment } from '../../entities/coach-payments';
+import { Feedback } from '../../entities/feedback.entity';
+import { FeedbackModule } from '../feedback/feedback.module';
+import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
+import { SubscriptionPlan } from '../../entities/subscription-plan.entity';
+import { UserSubscription } from '../../entities/user-subscription.entity';
+import { SubscriptionPayment } from '../../entities/subscription-payment.entity';
+import { FeatureUsage } from '../../entities/feature-usage.entity';
+import { Product } from '../../entities/product.entity';
+import { ProductsModule } from '../products/products.module';
 
 @Module({
   imports: [
@@ -82,6 +91,12 @@ import { CoachPayment } from '../../entities/coach-payments';
           ClientCoachTransaction,
           CoachOffer,
           CoachOrder,
+          Feedback,
+          SubscriptionPlan,
+          UserSubscription,
+          SubscriptionPayment,
+          FeatureUsage,
+          Product,
         ],
         synchronize: true, // Только для разработки
       }),
@@ -102,6 +117,9 @@ import { CoachPayment } from '../../entities/coach-payments';
     CoachReviewsModule,
     CoachBillingModule,
     PaymentsModule,
+    FeedbackModule,
+    SubscriptionsModule,
+    ProductsModule,
   ],
   controllers: [],
   providers: [],

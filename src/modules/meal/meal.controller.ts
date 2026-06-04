@@ -18,6 +18,7 @@ import { JwtAuthGuard } from '../../libs/guards/auth.guard';
 import { AnalyzeMealPhotoDto } from './dto/analyze-meal-photo.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import * as multer from 'multer';
+import { CurrentUser } from '../../config/decorators/current-user.decorator';
 
 const memoryStorage = multer.memoryStorage();
 
@@ -44,8 +45,8 @@ export class MealController {
   }
 
   @Post('analyze')
-  async analyze(@Body('text') text: string) {
-    return this.mealService.analyzeTextMeal(text);
+  async analyze(@Body('text') text: string, @CurrentUser('id') userId: string) {
+    return this.mealService.analyzeTextMeal(text, userId);
   }
 
   @UseInterceptors(FileInterceptor('photo', { storage: memoryStorage }))
@@ -53,7 +54,8 @@ export class MealController {
   async analyzePhoto(
     @Body() body: AnalyzeMealPhotoDto,
     @UploadedFile() file: Express.Multer.File,
+    @CurrentUser('id') userId: string,
   ) {
-    return this.mealService.analyzePhotoMeal(body, file);
+    return this.mealService.analyzePhotoMeal(body, file, userId);
   }
 }

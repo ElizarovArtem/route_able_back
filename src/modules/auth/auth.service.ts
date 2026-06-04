@@ -53,12 +53,12 @@ export class AuthService {
       channel: AuthChannel.EMAIL,
     });
     console.log(code);
-    // await this.emailService.sendMail({
-    //   to: email,
-    //   subject: 'Ваш проверочный код',
-    //   text: `Проверочный код: ${code}`,
-    //   html: `<p>Проверочный код: ${code}</p>`,
-    // });
+    await this.emailService.sendMail({
+      to: email,
+      subject: 'Ваш проверочный код',
+      text: `Проверочный код: ${code}`,
+      html: `<p>Проверочный код: ${code}</p>`,
+    });
     return { success: true };
   }
 

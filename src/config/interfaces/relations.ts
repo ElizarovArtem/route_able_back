@@ -7,6 +7,12 @@ export type MyRelationsItem = {
   clientCoachId: string;
   partner: { id: string; name: string; avatarUrl?: string | null };
   isActive?: boolean;
+  sessions?: {
+    total: number;
+    used: number;
+    remaining: number;
+    reserved: number;
+  } | null;
 };
 
 export type NutritionBlock = {

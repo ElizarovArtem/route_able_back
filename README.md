@@ -1,73 +1,97 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
+# Route Able Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Backend API for Route Able, a fitness and coaching application with authentication, coach-client relations, meal and workout tracking, subscriptions, coach billing, realtime chat, video lessons, feedback, and AI-assisted nutrition/workout flows.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Stack
 
-## Description
+- NestJS 11 and TypeScript
+- TypeORM with PostgreSQL
+- Passport JWT authentication with cookie support
+- Socket.IO gateway for realtime chat
+- LiveKit server SDK for video lesson tokens
+- GigaChat integration for AI text/photo analysis
+- Axios for external HTTP integrations, including Open Food Facts product lookup
+- Sharp and Multer for image/file processing
+- Optional S3 client configuration for uploaded assets
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Getting Started
 
-## Installation
+Install dependencies:
 
 ```bash
-$ npm install
+npm install
 ```
 
-## Running the app
+Create a local `.env` file with database, auth, CORS, and integration values. The minimum local API setup usually needs:
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+PORT=3000
+CORS_ORIGIN=http://localhost:3000
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=postgres
+DB_PASSWORD=postgres
+DB_NAME=route_able
+JWT_SECRET_KEY=local-secret
 ```
 
-## Test
+Start the API in watch mode:
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npm run start:dev
 ```
 
-## Support
+The API listens on `PORT` or `3000` by default.
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+## Available Scripts
 
-## Stay in touch
+- `npm run start`: start the Nest app once.
+- `npm run start:dev`: start the Nest app in watch mode.
+- `npm run start:debug`: start watch mode with debugger enabled.
+- `npm run start:prod`: run the compiled app from `dist/`.
+- `npm run build`: compile the app with Nest CLI.
+- `npm run lint`: run ESLint with auto-fix.
+- `npm run format`: run Prettier over source and test files.
+- `npm run migration:generate --name=<MigrationName>`: generate a TypeORM migration.
+- `npm run migration:run`: apply pending migrations.
+- `npm run migration:revert`: revert the latest migration.
 
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+## Project Structure
 
-## License
+- `src/main.ts`: Nest bootstrap, CORS, validation pipe, cookies, static `/uploads`.
+- `src/modules/app`: root module, global config, TypeORM setup, domain module registration.
+- `src/modules`: feature/domain modules with controllers and services.
+- `src/entities`: shared TypeORM entities.
+- `src/migrations`: TypeORM migrations.
+- `src/config`: decorators, enums, interfaces, constants, and external connection helpers.
+- `src/libs`: cross-cutting guards and shared infrastructure.
+- `uploads`: local uploaded assets served through `/uploads`.
+- `dist`: generated build output.
 
-Nest is [MIT licensed](LICENSE).
+See `docs/architecture.md` for module and data ownership rules.
+
+## Core Domains
+
+The API currently includes modules for auth, users, coach-client relations, chats, meals, planned meals, planned exercises, workout sessions, video lessons, coach billing, payments, subscriptions, feedback, AI flows, and products.
+
+The `products` module is a product lookup/cache layer used by barcode food logging. It exposes `GET /products/barcode/:barcode` and uses Open Food Facts as the external source when the product is not already cached locally.
+
+## Database
+
+The app uses TypeORM with PostgreSQL. Entities are registered explicitly in `src/modules/app/app.module.ts`.
+
+The root module currently has `synchronize: true` for development, but schema changes should still include migrations so the database is reproducible outside local dev.
+
+## API And Integrations
+
+See `docs/api-and-env.md` for environment variables and integration notes for CORS, JWT, PostgreSQL, LiveKit, GigaChat, SendSay, Telegram, S3, payment stubs, Open Food Facts, uploads, and Socket.IO.
+
+## Verification
+
+For backend changes, run:
+
+```bash
+npm run build
+```
+
+Run focused Jest tests when adding or changing test-covered services. The current `package.json` config expects `*.spec.ts` files under `src/`.
