@@ -1,22 +1,11 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  Unique,
-  CreateDateColumn,
-  JoinColumn,
-  Index,
-} from 'typeorm';
+import { Entity, Column, ManyToOne, Unique, JoinColumn, Index } from 'typeorm';
 import { User } from './user.entity';
+import { BaseEntity } from './base/base.entity';
 
 @Entity('client_coach')
 @Unique('uq_client_coach_pair', ['clientId', 'coachId'])
 @Index('i_client_coach_coach', ['coachId'])
-export class ClientCoach {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
+export class ClientCoach extends BaseEntity {
   @Column('uuid')
   clientId: string;
 
@@ -30,9 +19,6 @@ export class ClientCoach {
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'coachId', referencedColumnName: 'id' })
   coach: User;
-
-  @CreateDateColumn()
-  createdAt: Date;
 
   // есть ли сейчас активное платное взаимодействие
   @Column({ type: 'boolean', default: false })

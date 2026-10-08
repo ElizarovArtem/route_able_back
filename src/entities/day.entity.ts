@@ -1,16 +1,15 @@
 import {
   Entity,
-  PrimaryGeneratedColumn,
   Column,
   ManyToOne,
   OneToMany,
-  CreateDateColumn,
   JoinColumn,
   Index,
 } from 'typeorm';
 import { User } from './user.entity';
 import { Meal } from './meal.entity';
 import { ClientCoach } from './client-coach.entity';
+import { BaseEntity } from './base/base.entity';
 
 @Entity('days')
 @Index('uq_day_personal', ['userId', 'date'], {
@@ -23,10 +22,7 @@ import { ClientCoach } from './client-coach.entity';
   // уникальность для дней внутри пары
   where: 'client_coach_id IS NOT NULL',
 })
-export class Day {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
+export class Day extends BaseEntity {
   // явная FK-колонка на пользователя
   @Column('uuid')
   userId: string;
@@ -51,7 +47,4 @@ export class Day {
 
   @OneToMany(() => Meal, (meal) => meal.day, { cascade: true })
   meals: Meal[];
-
-  @CreateDateColumn()
-  createdAt: Date;
 }

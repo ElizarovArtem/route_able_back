@@ -1,28 +1,18 @@
-import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  Index,
-  JoinColumn,
-  ManyToOne,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn,
-} from 'typeorm';
+import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { User } from './user.entity';
 import { UserSubscription } from './user-subscription.entity';
 import {
   SubscriptionPaymentProvider,
   SubscriptionPaymentStatus,
 } from '../config/emuns/subscription';
+import { BaseEntity } from './base/base.entity';
+import { numericTransformer } from './base/transformers';
 
 @Entity('subscription_payments')
 @Index(['userId', 'createdAt'])
 @Index(['userSubscriptionId'])
 @Index(['externalPaymentId'], { unique: true })
-export class SubscriptionPayment {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
+export class SubscriptionPayment extends BaseEntity {
   @Column('uuid')
   userId: string;
 
@@ -54,7 +44,12 @@ export class SubscriptionPayment {
   })
   status: SubscriptionPaymentStatus;
 
-  @Column({ type: 'numeric', precision: 12, scale: 2 })
+  @Column({
+    type: 'numeric',
+    precision: 12,
+    scale: 2,
+    transformer: numericTransformer,
+  })
   amount: string;
 
   @Column({ type: 'char', length: 3, default: 'RUB' })
@@ -74,10 +69,4 @@ export class SubscriptionPayment {
 
   @Column({ type: 'jsonb', nullable: true })
   rawPayload?: Record<string, any> | null;
-
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
 }

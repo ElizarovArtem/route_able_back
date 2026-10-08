@@ -37,6 +37,6 @@ export class AuthCodes {
   })
   channel: AuthChannel;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 }

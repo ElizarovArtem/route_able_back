@@ -1,18 +1,10 @@
-import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  Index,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn,
-} from 'typeorm';
+import { Column, Entity, Index } from 'typeorm';
+import { BaseEntity } from './base/base.entity';
+import { numericTransformer } from './base/transformers';
 
 @Entity('products')
 @Index('uq_products_barcode', ['barcode'], { unique: true })
-export class Product {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
+export class Product extends BaseEntity {
   @Column({ type: 'varchar', length: 32 })
   barcode: string;
 
@@ -25,22 +17,48 @@ export class Product {
   @Column({ type: 'text', nullable: true })
   imageUrl?: string | null;
 
-  @Column({ type: 'numeric', precision: 10, scale: 2, nullable: true })
+  @Column({
+    type: 'numeric',
+    precision: 10,
+    scale: 2,
+    nullable: true,
+    transformer: numericTransformer,
+  })
   servingSize?: number | null;
 
   @Column({ type: 'varchar', length: 32, nullable: true })
   servingUnit?: string | null;
 
-  @Column({ type: 'numeric', precision: 10, scale: 2 })
+  @Column({
+    type: 'numeric',
+    precision: 10,
+    scale: 2,
+    transformer: numericTransformer,
+  })
   caloriesPer100g: number;
 
-  @Column({ type: 'numeric', precision: 10, scale: 2 })
+  @Column({
+    type: 'numeric',
+    precision: 10,
+    scale: 2,
+    transformer: numericTransformer,
+  })
   proteinPer100g: number;
 
-  @Column({ type: 'numeric', precision: 10, scale: 2 })
+  @Column({
+    type: 'numeric',
+    precision: 10,
+    scale: 2,
+    transformer: numericTransformer,
+  })
   fatPer100g: number;
 
-  @Column({ type: 'numeric', precision: 10, scale: 2 })
+  @Column({
+    type: 'numeric',
+    precision: 10,
+    scale: 2,
+    transformer: numericTransformer,
+  })
   carbsPer100g: number;
 
   @Column({ type: 'varchar', length: 64 })
@@ -48,10 +66,4 @@ export class Product {
 
   @Column({ type: 'jsonb', nullable: true })
   rawExternalData?: Record<string, any> | null;
-
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
 }

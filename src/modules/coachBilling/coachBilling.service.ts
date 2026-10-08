@@ -122,9 +122,9 @@ export class CoachBillingService {
         coachId: offer.coachId,
         type: CoachPaymentType.ORDER_PAYMENT,
         status: CoachPaymentStatus.CREATED,
-        amount: String(order.amount),
-        platformFee: '0',
-        coachAmount: '0',
+        amount: order.amount,
+        platformFee: 0,
+        coachAmount: 0,
         currency: order.currency,
       });
 

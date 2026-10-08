@@ -1,27 +1,22 @@
 import {
   Column,
-  CreateDateColumn,
   Entity,
   Index,
   JoinColumn,
   ManyToOne,
   OneToMany,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn,
 } from 'typeorm';
 import { User } from './user.entity';
 import { SubscriptionPlan } from './subscription-plan.entity';
 import { SubscriptionStatus } from '../config/emuns/subscription';
 import { SubscriptionPayment } from './subscription-payment.entity';
+import { BaseEntity } from './base/base.entity';
 
 @Entity('user_subscriptions')
 @Index(['userId', 'status'])
 @Index(['endAt'])
 @Index(['externalSubscriptionId'])
-export class UserSubscription {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
+export class UserSubscription extends BaseEntity {
   @Column('uuid')
   userId: string;
 
@@ -66,10 +61,4 @@ export class UserSubscription {
 
   @OneToMany(() => SubscriptionPayment, (payment) => payment.userSubscription)
   payments: SubscriptionPayment[];
-
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
 }

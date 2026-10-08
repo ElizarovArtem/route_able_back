@@ -83,7 +83,7 @@ export class PaymentsService {
 
       const result = await this.paymentProvider.createPayment({
         orderId: order.id,
-        amount: Number(order.amount),
+        amount: order.amount,
         currency: order.currency,
         description: `Оплата заказа ${order.id}`,
         customerId: order.clientId,

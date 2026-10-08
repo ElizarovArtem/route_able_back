@@ -1,25 +1,16 @@
-import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  Index,
-  OneToMany,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn,
-} from 'typeorm';
+import { Column, Entity, Index, OneToMany } from 'typeorm';
 import {
   SubscriptionPeriod,
   SubscriptionPlanCode,
   SubscriptionPlanFeatures,
 } from '../config/emuns/subscription';
 import { UserSubscription } from './user-subscription.entity';
+import { BaseEntity } from './base/base.entity';
+import { numericTransformer } from './base/transformers';
 
 @Entity('subscription_plans')
 @Index(['code', 'period'], { unique: true })
-export class SubscriptionPlan {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
+export class SubscriptionPlan extends BaseEntity {
   @Column({
     type: 'enum',
     enum: SubscriptionPlanCode,
@@ -32,7 +23,13 @@ export class SubscriptionPlan {
   @Column({ type: 'text', nullable: true })
   description?: string | null;
 
-  @Column({ type: 'numeric', precision: 12, scale: 2, default: 0 })
+  @Column({
+    type: 'numeric',
+    precision: 12,
+    scale: 2,
+    default: 0,
+    transformer: numericTransformer,
+  })
   price: string;
 
   @Column({ type: 'char', length: 3, default: 'RUB' })
@@ -55,10 +52,4 @@ export class SubscriptionPlan {
 
   @OneToMany(() => UserSubscription, (subscription) => subscription.plan)
   subscriptions: UserSubscription[];
-
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
 }

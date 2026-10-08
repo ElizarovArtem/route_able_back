@@ -392,11 +392,6 @@ export class CoachWorkoutSessionsService {
     }
   }
 
-  private formatMoney(value: number | string) {
-    const num = typeof value === 'number' ? value : Number(value ?? 0);
-    return num.toFixed(2);
-  }
-
   private async finalizeCompletedSession(
     manager: EntityManager,
     session: CoachWorkoutSessions,
@@ -453,7 +448,7 @@ export class CoachWorkoutSessionsService {
     });
     await manager.save(trx);
 
-    const amount = this.formatMoney(session.price);
+    const amount = session.price;
     const payment = manager.create(CoachPayment, {
       clientCoachId: relation.id,
       orderId: session.orderId,
@@ -463,7 +458,7 @@ export class CoachWorkoutSessionsService {
       type: CoachPaymentType.COACH_PAYOUT,
       status: CoachPaymentStatus.READY_FOR_PAYOUT,
       amount,
-      platformFee: '0.00',
+      platformFee: 0,
       coachAmount: amount,
       currency: session.currency,
       readyForPayoutAt: new Date(),
@@ -486,7 +481,7 @@ export class CoachWorkoutSessionsService {
         clientId: session.clientId,
         orderId: session.orderId,
         sessionId: session.id,
-        amount: Number(payment.coachAmount ?? payment.amount ?? 0),
+        amount: payment.coachAmount ?? payment.amount ?? 0,
         currency: session.currency,
       });
 

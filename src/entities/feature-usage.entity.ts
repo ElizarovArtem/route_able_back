@@ -1,22 +1,11 @@
-import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  Index,
-  JoinColumn,
-  ManyToOne,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn,
-} from 'typeorm';
+import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { User } from './user.entity';
 import { PaidFeature } from '../config/emuns/subscription';
+import { BaseEntity } from './base/base.entity';
 
 @Entity('feature_usage')
 @Index(['userId', 'feature', 'periodStart', 'periodEnd'], { unique: true })
-export class FeatureUsage {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
+export class FeatureUsage extends BaseEntity {
   @Column('uuid')
   userId: string;
 
@@ -41,10 +30,4 @@ export class FeatureUsage {
 
   @Column({ type: 'int', default: 0 })
   limit: number;
-
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
 }

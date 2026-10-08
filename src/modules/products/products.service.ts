@@ -174,15 +174,12 @@ export class ProductsService {
       name: product.name,
       brand: product.brand ?? null,
       imageUrl: product.imageUrl ?? null,
-      servingSize:
-        product.servingSize === null || product.servingSize === undefined
-          ? null
-          : Number(product.servingSize),
+      servingSize: product.servingSize ?? null,
       servingUnit: product.servingUnit ?? null,
-      caloriesPer100g: Number(product.caloriesPer100g),
-      proteinPer100g: Number(product.proteinPer100g),
-      fatPer100g: Number(product.fatPer100g),
-      carbsPer100g: Number(product.carbsPer100g),
+      caloriesPer100g: product.caloriesPer100g,
+      proteinPer100g: product.proteinPer100g,
+      fatPer100g: product.fatPer100g,
+      carbsPer100g: product.carbsPer100g,
       source: product.source,
     };
   }

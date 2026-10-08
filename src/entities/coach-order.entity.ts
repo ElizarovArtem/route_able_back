@@ -1,39 +1,13 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  JoinColumn,
-  CreateDateColumn,
-  UpdateDateColumn,
-  Index,
-} from 'typeorm';
-import { User } from './user.entity';
+import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { CoachOffer } from './coach-offer.entity';
 import { CoachOrderStatus } from '../config/emuns/coach-billing';
-import { ClientCoach } from './client-coach.entity';
+import { PairScopedEntity } from './base/pair-scoped.entity';
+import { numericTransformer } from './base/transformers';
 
 @Entity('coach_orders')
 @Index(['clientId', 'coachId'])
 @Index(['coachId', 'status'])
-export class CoachOrder {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
-  @Column('uuid')
-  clientId: string;
-
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'clientId', referencedColumnName: 'id' })
-  client: User;
-
-  @Column('uuid')
-  coachId: string;
-
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'coachId', referencedColumnName: 'id' })
-  coach: User;
-
+export class CoachOrder extends PairScopedEntity {
   @Column('uuid')
   offerId: string;
 
@@ -51,7 +25,12 @@ export class CoachOrder {
   @Column({ type: 'int' })
   sessionCount: number;
 
-  @Column({ type: 'numeric', precision: 12, scale: 2 })
+  @Column({
+    type: 'numeric',
+    precision: 12,
+    scale: 2,
+    transformer: numericTransformer,
+  })
   amount: number;
 
   @Column({ type: 'char', length: 3, default: 'RUB' })
@@ -77,17 +56,4 @@ export class CoachOrder {
 
   @Column({ type: 'timestamptz', nullable: true })
   refundedAt?: Date | null;
-
-  @Column('uuid')
-  clientCoachId: string;
-
-  @ManyToOne(() => ClientCoach, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'clientCoachId', referencedColumnName: 'id' })
-  clientCoach: ClientCoach;
-
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
 }

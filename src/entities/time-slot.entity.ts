@@ -1,13 +1,6 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  JoinColumn,
-  CreateDateColumn,
-  Index,
-} from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { User } from './user.entity';
+import { BaseEntity } from './base/base.entity';
 
 export enum TimeSlotStatus {
   FREE = 'FREE',
@@ -19,10 +12,7 @@ export enum TimeSlotStatus {
 @Index('uq_slot_by_coach_time', ['coachId', 'startAt', 'endAt'], {
   unique: true,
 })
-export class TimeSlot {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
+export class TimeSlot extends BaseEntity {
   @Column('uuid')
   coachId: string;
 
@@ -42,9 +32,6 @@ export class TimeSlot {
     default: TimeSlotStatus.FREE,
   })
   status: TimeSlotStatus;
-
-  @CreateDateColumn()
-  createdAt: Date;
 
   @Column({ type: 'text', nullable: true })
   note?: string | null;

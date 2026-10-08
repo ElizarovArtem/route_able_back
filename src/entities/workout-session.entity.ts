@@ -1,25 +1,20 @@
 import {
   Entity,
-  PrimaryGeneratedColumn,
   Column,
   ManyToOne,
   OneToMany,
-  CreateDateColumn,
-  UpdateDateColumn,
   JoinColumn,
   Index,
 } from 'typeorm';
 import { User } from './user.entity';
 import { WorkoutExercise } from './workout-exercise.entity';
 import { WorkoutStatus } from '../config/emuns/ai-workout';
+import { BaseEntity } from './base/base.entity';
 
 @Index(['userId', 'date'])
 @Index(['userId', 'sourceSessionId'])
 @Entity('workout_sessions')
-export class WorkoutSession {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
+export class WorkoutSession extends BaseEntity {
   @Column('uuid')
   userId: string;
 
@@ -65,10 +60,4 @@ export class WorkoutSession {
 
   @Column({ type: 'int', default: 0 })
   currentExerciseIndex: number;
-
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
 }

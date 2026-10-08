@@ -1,14 +1,7 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  JoinColumn,
-  CreateDateColumn,
-  UpdateDateColumn,
-  Index,
-} from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { User } from './user.entity';
+import { BaseEntity } from './base/base.entity';
+import { numericTransformer } from './base/transformers';
 
 export enum CoachOfferType {
   SINGLE_SESSION = 'SINGLE_SESSION',
@@ -17,10 +10,7 @@ export enum CoachOfferType {
 
 @Entity('coach_offers')
 @Index(['coachId', 'isActive'])
-export class CoachOffer {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
+export class CoachOffer extends BaseEntity {
   @Column('uuid')
   coachId: string;
 
@@ -40,7 +30,12 @@ export class CoachOffer {
   @Column({ type: 'int', default: 1 })
   sessionCount: number; // 1 для разового, >1 для пакета
 
-  @Column({ type: 'numeric', precision: 12, scale: 2 })
+  @Column({
+    type: 'numeric',
+    precision: 12,
+    scale: 2,
+    transformer: numericTransformer,
+  })
   price: number;
 
   @Column({ type: 'char', length: 3, default: 'RUB' })
@@ -48,10 +43,4 @@ export class CoachOffer {
 
   @Column({ type: 'boolean', default: true })
   isActive: boolean;
-
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
 }

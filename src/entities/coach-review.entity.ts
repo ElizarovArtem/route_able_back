@@ -1,24 +1,12 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  Index,
-  CreateDateColumn,
-  UpdateDateColumn,
-  Check,
-  JoinColumn,
-} from 'typeorm';
+import { Entity, Column, ManyToOne, Index, Check, JoinColumn } from 'typeorm';
 import { User } from './user.entity';
+import { BaseEntity } from './base/base.entity';
 
 @Entity('coach_reviews')
 @Check(`"rating" >= 1 AND "rating" <= 5`)
 @Index(['authorId', 'coachUserId'], { unique: true })
 @Index(['coachUserId', 'createdAt'])
-export class CoachReview {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
+export class CoachReview extends BaseEntity {
   @Column({ type: 'uuid' })
   coachUserId: string;
 
@@ -41,10 +29,4 @@ export class CoachReview {
 
   @Column({ type: 'boolean', default: true })
   isVerified: boolean;
-
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
 }
