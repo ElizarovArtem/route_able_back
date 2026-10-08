@@ -6,11 +6,13 @@ import {
   Unique,
   CreateDateColumn,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { User } from './user.entity';
 
 @Entity('client_coach')
 @Unique('uq_client_coach_pair', ['clientId', 'coachId'])
+@Index('i_client_coach_coach', ['coachId'])
 export class ClientCoach {
   @PrimaryGeneratedColumn('uuid')
   id: string;

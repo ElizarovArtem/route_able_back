@@ -4,11 +4,13 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { WorkoutSession } from './workout-session.entity';
 import { ExerciseKey, WorkoutExerciseStatus } from '../config/emuns/ai-workout';
 
 @Entity('workout_exercises')
+@Index('i_workout_exercise_session_order', ['sessionId', 'order'])
 export class WorkoutExercise {
   @PrimaryGeneratedColumn('uuid')
   id: string;

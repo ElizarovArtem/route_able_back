@@ -4,12 +4,14 @@ import {
   Column,
   ManyToOne,
   Unique,
+  Index,
 } from 'typeorm';
 import { Chat } from './chat.entity';
 import { User } from './user.entity';
 
 @Entity('chat_participants')
 @Unique('u_chat_user', ['chatId', 'userId'])
+@Index('i_chat_participant_user', ['userId'])
 export class ChatParticipant {
   @PrimaryGeneratedColumn('uuid') id: string;
 

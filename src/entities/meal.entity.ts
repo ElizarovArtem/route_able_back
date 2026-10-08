@@ -5,6 +5,7 @@ import {
   ManyToOne,
   CreateDateColumn,
   Unique,
+  Index,
   JoinColumn,
 } from 'typeorm';
 import { Day } from './day.entity';
@@ -12,6 +13,7 @@ import { PlannedMeal } from './planned-meal.entity';
 
 @Entity('meals')
 @Unique('uq_meal_planned_id', ['plannedMealId'])
+@Index('i_meal_day_created_at', ['day', 'createdAt'])
 export class Meal {
   @PrimaryGeneratedColumn('uuid')
   id: string;
