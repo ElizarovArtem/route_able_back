@@ -96,7 +96,7 @@ import { ProductsModule } from '../products/products.module';
           FeatureUsage,
           Product,
         ],
-        synchronize: true, // Только для разработки
+        synchronize: config.get('DB_SYNCHRONIZE') === 'true',
       }),
     }),
 
