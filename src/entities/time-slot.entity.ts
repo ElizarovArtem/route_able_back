@@ -1,4 +1,11 @@
-import { Entity, Column, ManyToOne, JoinColumn, Index, Check } from 'typeorm';
+import {
+  Entity,
+  Column,
+  ManyToOne,
+  JoinColumn,
+  Check,
+  Exclusion,
+} from 'typeorm';
 import { User } from './user.entity';
 import { BaseEntity } from './base/base.entity';
 
@@ -10,9 +17,10 @@ export enum TimeSlotStatus {
 
 @Entity('time_slots')
 @Check('chk_time_slot_range', `"endAt" > "startAt"`)
-@Index('uq_slot_by_coach_time', ['coachId', 'startAt', 'endAt'], {
-  unique: true,
-})
+@Exclusion(
+  'no_slot_overlap',
+  `USING gist ("coachId" WITH =, tstzrange("startAt", "endAt") WITH &&) WHERE ("status" <> 'DISABLED')`,
+)
 export class TimeSlot extends BaseEntity {
   @Column('uuid')
   coachId: string;

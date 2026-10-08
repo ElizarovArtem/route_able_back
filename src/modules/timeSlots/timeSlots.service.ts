@@ -98,6 +98,11 @@ export class TimeSlotsService {
         throw new BadRequestException('Slot with this time already exists');
       }
 
+      // 23P01 — exclusion_violation: параллельный запрос успел создать пересекающийся слот
+      if (e.code === '23P01') {
+        throw new BadRequestException('Slot overlaps with existing slot');
+      }
+
       throw e;
     }
   }
