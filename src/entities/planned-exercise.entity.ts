@@ -1,8 +1,9 @@
-import { Entity, Column, Index } from 'typeorm';
+import { Entity, Column, Index, Check } from 'typeorm';
 import { PairScopedEntity } from './base/pair-scoped.entity';
 import { numericTransformer } from './base/transformers';
 
 @Entity('planned_exercises')
+@Check('chk_planned_exercise_positive', `"sets" > 0 AND "reps" > 0`)
 @Index('i_planned_ex_by_relation_date', ['clientCoachId', 'date'])
 export class PlannedExercise extends PairScopedEntity {
   // якорь — конкретная пара client↔coach

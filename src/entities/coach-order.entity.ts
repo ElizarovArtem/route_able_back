@@ -1,10 +1,14 @@
-import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn, Index, Check } from 'typeorm';
 import { CoachOffer } from './coach-offer.entity';
 import { CoachOrderStatus } from '../config/emuns/coach-billing';
 import { PairScopedEntity } from './base/pair-scoped.entity';
 import { numericTransformer } from './base/transformers';
 
 @Entity('coach_orders')
+@Check(
+  'chk_coach_order_sessions_within_count',
+  `"sessionsUsed" >= 0 AND "sessionsReserved" >= 0 AND "sessionsUsed" + "sessionsReserved" <= "sessionCount"`,
+)
 @Index(['clientId', 'coachId'])
 @Index(['coachId', 'status'])
 export class CoachOrder extends PairScopedEntity {

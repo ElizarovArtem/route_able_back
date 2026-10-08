@@ -1,4 +1,4 @@
-import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn, Index, Check } from 'typeorm';
 import { User } from './user.entity';
 import { BaseEntity } from './base/base.entity';
 import { numericTransformer } from './base/transformers';
@@ -9,6 +9,7 @@ export enum CoachOfferType {
 }
 
 @Entity('coach_offers')
+@Check('chk_coach_offer_positive', `"sessionCount" >= 1 AND "price" >= 0`)
 @Index(['coachId', 'isActive'])
 export class CoachOffer extends BaseEntity {
   @Column('uuid')

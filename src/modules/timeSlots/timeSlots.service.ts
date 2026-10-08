@@ -16,7 +16,7 @@ import {
   CoachOrderStatus,
   CoachWorkoutSessionStatus,
 } from '../../config/emuns/coach-billing';
-import { ClientCoachTransaction } from '../../entities/client-coach-transaction.entity';
+import { SessionBalanceService } from '../coachBilling/session-balance.service';
 import { CoachOrder } from '../../entities/coach-order.entity';
 import { CoachWorkoutSessions } from '../../entities/coach-workout-sessions';
 
@@ -33,6 +33,7 @@ export class TimeSlotsService {
     private readonly coachWorkoutSessionsRepo: Repository<CoachWorkoutSessions>,
 
     private readonly dataSource: DataSource,
+    private readonly sessionBalance: SessionBalanceService,
   ) {}
 
   // ====== ВСПОМОГАТЕЛЬНОЕ ======
@@ -172,19 +173,7 @@ export class TimeSlotsService {
     const { clientId } = dto;
 
     return this.dataSource.transaction(async (manager) => {
-      const relation = await manager.findOne(ClientCoach, {
-        where: { coachId, clientId, isActive: true },
-        lock: { mode: 'pessimistic_write' },
-      });
-
-      if (!relation) {
-        throw new BadRequestException('No active relation with this client');
-      }
-
-      if (relation.sessionsRemaining <= 0) {
-        throw new BadRequestException('Client has no remaining sessions');
-      }
-
+      // порядок блокировок везде: слот → пара → заказ
       const slot = await manager.findOne(TimeSlot, {
         where: { id: slotId, coachId },
         lock: { mode: 'pessimistic_write' },
@@ -202,59 +191,22 @@ export class TimeSlotsService {
         throw new BadRequestException('Cannot book slot in the past');
       }
 
-      const order = await this.findAvailableOrder(manager, relation.id);
-      if (!order) {
-        throw new BadRequestException('No paid order available for booking');
+      const relation = await manager.findOne(ClientCoach, {
+        where: { coachId, clientId, isActive: true },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      if (!relation) {
+        throw new BadRequestException('No active relation with this client');
       }
 
-      const durationMinutes = Math.max(
-        1,
-        Math.round((slot.endAt.getTime() - slot.startAt.getTime()) / 60000),
-      );
-
-      const sessionPrice = Number(
-        (Number(order.amount) / Math.max(order.sessionCount, 1)).toFixed(2),
-      );
-
-      const session = manager.create(CoachWorkoutSessions, {
+      return this.bookSlot(manager, {
+        relation,
+        slot,
         clientId,
-        coachId,
-        clientCoachId: relation.id,
-        orderId: order.id,
-        timeSlotId: slot.id,
-        scheduledAt: slot.startAt,
-        durationMinutes,
-        price: sessionPrice,
-        currency: order.currency,
-        status: CoachWorkoutSessionStatus.BOOKED,
+        reserveComment: (sessionId) =>
+          `Тренер забронировал слот ${slot.id} для клиента ${clientId}, сессия ${sessionId}`,
       });
-
-      const savedSession = await manager.save(session);
-
-      slot.status = TimeSlotStatus.BOOKED;
-      await manager.save(slot);
-
-      relation.sessionsReserved += 1;
-      relation.sessionsRemaining -= 1;
-      relation.isActive =
-        relation.sessionsRemaining > 0 || relation.sessionsReserved > 0;
-
-      order.sessionsReserved += 1;
-      await manager.save(order);
-      await manager.save(relation);
-
-      const trx = manager.create(ClientCoachTransaction, {
-        clientCoachId: relation.id,
-        type: ClientCoachTransactionType.SESSION_RESERVE,
-        deltaSessions: -1,
-        balanceAfter: relation.sessionsRemaining,
-        orderId: order.id,
-        comment: `Тренер забронировал слот ${slot.id} для клиента ${clientId}, сессия ${savedSession.id}`,
-      });
-
-      await manager.save(trx);
-
-      return savedSession;
     });
   }
 
@@ -368,25 +320,43 @@ export class TimeSlotsService {
         throw new ForbiddenException('No active relation with this coach');
       }
 
-      if (relation.sessionsRemaining <= 0) {
-        throw new BadRequestException('No remaining sessions');
-      }
+      return this.bookSlot(manager, {
+        relation,
+        slot,
+        clientId,
+        reserveComment: (sessionId) =>
+          `Резерв слота ${slot.id} под сессию ${sessionId}`,
+      });
+    });
+  }
 
-      const order = await this.findAvailableOrder(manager, relation.id);
-      if (!order) {
-        throw new BadRequestException('No paid order available for booking');
-      }
+  /**
+   * Общая часть бронирования: сессия + слот + резерв баланса в одной транзакции.
+   * Вызывающий уже проверил права и что слот свободен.
+   */
+  private async bookSlot(
+    manager: EntityManager,
+    params: {
+      relation: ClientCoach;
+      slot: TimeSlot;
+      clientId: string;
+      reserveComment: (sessionId: string) => string;
+    },
+  ) {
+    const { relation, slot, clientId, reserveComment } = params;
 
-      const durationMinutes = Math.max(
-        1,
-        Math.round((slot.endAt.getTime() - slot.startAt.getTime()) / 60000),
-      );
+    const order = await this.findAvailableOrder(manager, relation.id);
+    if (!order) {
+      throw new BadRequestException('No paid order available for booking');
+    }
 
-      const sessionPrice = Number(
-        (Number(order.amount) / Math.max(order.sessionCount, 1)).toFixed(2),
-      );
+    const durationMinutes = Math.max(
+      1,
+      Math.round((slot.endAt.getTime() - slot.startAt.getTime()) / 60000),
+    );
 
-      const session = manager.create(CoachWorkoutSessions, {
+    const session = await manager.save(
+      manager.create(CoachWorkoutSessions, {
         clientId,
         coachId: slot.coachId,
         clientCoachId: relation.id,
@@ -394,38 +364,25 @@ export class TimeSlotsService {
         timeSlotId: slot.id,
         scheduledAt: slot.startAt,
         durationMinutes,
-        price: sessionPrice,
+        price: Number(
+          (order.amount / Math.max(order.sessionCount, 1)).toFixed(2),
+        ),
         currency: order.currency,
         status: CoachWorkoutSessionStatus.BOOKED,
-      });
+      }),
+    );
 
-      const savedSession = await manager.save(session);
+    slot.status = TimeSlotStatus.BOOKED;
+    await manager.save(slot);
 
-      slot.status = TimeSlotStatus.BOOKED;
-      await manager.save(slot);
+    await this.sessionBalance.reserve(
+      manager,
+      relation.id,
+      order,
+      reserveComment(session.id),
+    );
 
-      relation.sessionsReserved += 1;
-      relation.sessionsRemaining -= 1;
-      relation.isActive =
-        relation.sessionsRemaining > 0 || relation.sessionsReserved > 0;
-
-      order.sessionsReserved += 1;
-      await manager.save(order);
-      await manager.save(relation);
-
-      const trx = manager.create(ClientCoachTransaction, {
-        clientCoachId: relation.id,
-        type: ClientCoachTransactionType.SESSION_RESERVE,
-        deltaSessions: -1,
-        balanceAfter: relation.sessionsRemaining,
-        orderId: order.id,
-        comment: `Резерв слота ${slot.id} под сессию ${savedSession.id}`,
-      });
-
-      await manager.save(trx);
-
-      return savedSession;
-    });
+    return session;
   }
 
   private findAvailableOrder(manager: EntityManager, relationId: string) {
