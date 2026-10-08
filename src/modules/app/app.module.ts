@@ -31,7 +31,6 @@ import { CoachVerificationModule } from '../coachVerification/coachVerification.
 import { CoachReviewsModule } from '../coachReview/coachReview.module';
 import { CoachReview } from '../../entities/coach-review.entity';
 import { CoachProfile } from '../../entities/coach-profile.entity';
-import { Purchase } from '../../entities/purchase.entity';
 import { CoachBillingModule } from '../coachBilling/coachBilling.module';
 import { PaymentsModule } from '../payment/payments.module';
 import { ClientCoachTransaction } from '../../entities/client-coach-transaction.entity';
@@ -87,7 +86,6 @@ import { ProductsModule } from '../products/products.module';
           CoachVerificationRequest,
           CoachReview,
           CoachProfile,
-          Purchase,
           ClientCoachTransaction,
           CoachOffer,
           CoachOrder,

@@ -4,13 +4,12 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { DataSource, Repository, Not, IsNull } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { UpsertCoachReviewDto } from './dto/upsert-coach-review.dto';
 import { CoachReview } from 'src/entities/coach-review.entity';
 import { CoachProfile } from '../../entities/coach-profile.entity';
-import { Purchase } from '../../entities/purchase.entity';
 import { User } from '../../entities/user.entity';
 import { Roles } from '../../config/emuns/user';
 
@@ -25,9 +24,6 @@ export class CoachReviewsService {
     @InjectRepository(CoachProfile)
     private readonly coachProfileRepo: Repository<CoachProfile>,
 
-    @InjectRepository(Purchase)
-    private readonly purchaseRepo: Repository<Purchase>,
-
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
   ) {}
@@ -41,7 +37,6 @@ export class CoachReviewsService {
 
     return this.dataSource.transaction(async (m) => {
       const userRepo = m.getRepository(User);
-      const purchaseRepo = m.getRepository(Purchase);
       const reviewRepo = m.getRepository(CoachReview);
       const coachProfileRepo = m.getRepository(CoachProfile);
 
@@ -60,20 +55,6 @@ export class CoachReviewsService {
       if (coachUserId === authorId) {
         throw new ForbiddenException('Нельзя оставить отзыв самому себе');
       }
-
-      // const hasAnyPaidPurchase = await purchaseRepo.exists({
-      //   where: {
-      //     buyerId: authorId,
-      //     coachUserId,
-      //     paidAt: Not(IsNull()),
-      //   },
-      // });
-      //
-      // if (!hasAnyPaidPurchase) {
-      //   throw new ForbiddenException(
-      //     'Можно оставить отзыв только после оплаченной покупки у тренера',
-      //   );
-      // }
 
       const existing = await reviewRepo.findOne({
         where: { authorId, coachUserId },
