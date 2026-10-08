@@ -77,10 +77,20 @@ export class MealService {
 
     const personalGoals = hasPersonalGoals
       ? {
-          calories: Number(user.personalGoalCalories) ?? null,
-          protein: Number(user.personalGoalProtein) ?? null,
-          fat: Number(user.personalGoalFat) ?? null,
-          carbs: Number(user.personalGoalCarbs) ?? null,
+          calories:
+            user.personalGoalCalories == null
+              ? null
+              : Number(user.personalGoalCalories),
+          protein:
+            user.personalGoalProtein == null
+              ? null
+              : Number(user.personalGoalProtein),
+          fat:
+            user.personalGoalFat == null ? null : Number(user.personalGoalFat),
+          carbs:
+            user.personalGoalCarbs == null
+              ? null
+              : Number(user.personalGoalCarbs),
         }
       : null;
 
@@ -104,10 +114,10 @@ export class MealService {
           clientCoachId: rel.id,
           coachId: rel.coachId,
           coachName: rel.coach?.name ?? null,
-          calories: Number(rel.goalCalories) ?? null,
-          protein: Number(rel.goalProtein) ?? null,
-          fat: Number(rel.goalFat) ?? null,
-          carbs: Number(rel.goalCarbs) ?? null,
+          calories: rel.goalCalories == null ? null : Number(rel.goalCalories),
+          protein: rel.goalProtein == null ? null : Number(rel.goalProtein),
+          fat: rel.goalFat == null ? null : Number(rel.goalFat),
+          carbs: rel.goalCarbs == null ? null : Number(rel.goalCarbs),
         };
       })
       .filter((g) => g !== null);
