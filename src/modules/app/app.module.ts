@@ -47,6 +47,7 @@ import { UserSubscription } from '../../entities/user-subscription.entity';
 import { SubscriptionPayment } from '../../entities/subscription-payment.entity';
 import { FeatureUsage } from '../../entities/feature-usage.entity';
 import { Product } from '../../entities/product.entity';
+import { VideoLesson } from '../../entities/video-lesson.entity';
 import { ProductsModule } from '../products/products.module';
 
 @Module({
@@ -95,6 +96,7 @@ import { ProductsModule } from '../products/products.module';
           SubscriptionPayment,
           FeatureUsage,
           Product,
+          VideoLesson,
         ],
         synchronize: config.get('DB_SYNCHRONIZE') === 'true',
       }),
