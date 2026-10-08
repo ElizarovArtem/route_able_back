@@ -147,7 +147,7 @@ export class SubscriptionsService implements OnModuleInit {
   }> {
     const plan = await this.findActivePlanOrThrow(dto.planCode, dto.period);
 
-    if (plan.code === SubscriptionPlanCode.FREE || Number(plan.price) <= 0) {
+    if (plan.code === SubscriptionPlanCode.FREE || plan.price <= 0) {
       throw new BadRequestException({
         code: 'PLAN_NOT_FOUND',
         message: 'Free plan does not require checkout',
@@ -168,7 +168,7 @@ export class SubscriptionsService implements OnModuleInit {
 
       const providerResult = await this.paymentProvider.createPayment({
         orderId: savedSubscription.id,
-        amount: Number(plan.price),
+        amount: plan.price,
         currency: plan.currency,
         description: `Оплата подписки ${plan.code}_${plan.period}`,
         customerId: userId,
@@ -513,7 +513,7 @@ export class SubscriptionsService implements OnModuleInit {
         period: SubscriptionPeriod.MONTH,
         name: 'Free',
         description: 'Базовый бесплатный тариф',
-        price: '0.00',
+        price: 0,
         currency: 'RUB',
         features: this.getDefaultFeatures(SubscriptionPlanCode.FREE),
         isActive: true,
@@ -524,7 +524,7 @@ export class SubscriptionsService implements OnModuleInit {
         period: SubscriptionPeriod.MONTH,
         name: 'Premium Monthly',
         description: 'Помесячный тариф Premium',
-        price: '990.00',
+        price: 990,
         currency: 'RUB',
         features: this.getDefaultFeatures(SubscriptionPlanCode.PREMIUM),
         isActive: true,
@@ -535,7 +535,7 @@ export class SubscriptionsService implements OnModuleInit {
         period: SubscriptionPeriod.MONTH,
         name: 'Pro Monthly',
         description: 'Помесячный тариф Pro',
-        price: '1990.00',
+        price: 1990,
         currency: 'RUB',
         features: this.getDefaultFeatures(SubscriptionPlanCode.PRO),
         isActive: true,
@@ -546,7 +546,7 @@ export class SubscriptionsService implements OnModuleInit {
         period: SubscriptionPeriod.YEAR,
         name: 'Premium Yearly',
         description: 'Годовой тариф Premium',
-        price: '9990.00',
+        price: 9990,
         currency: 'RUB',
         features: this.getDefaultFeatures(SubscriptionPlanCode.PREMIUM),
         isActive: true,
@@ -557,7 +557,7 @@ export class SubscriptionsService implements OnModuleInit {
         period: SubscriptionPeriod.YEAR,
         name: 'Pro Yearly',
         description: 'Годовой тариф Pro',
-        price: '19990.00',
+        price: 19990,
         currency: 'RUB',
         features: this.getDefaultFeatures(SubscriptionPlanCode.PRO),
         isActive: true,
@@ -617,8 +617,8 @@ export class SubscriptionsService implements OnModuleInit {
     const basePlan = monthPlan ?? yearPlan;
     const meta = this.getPlanPresentation(code);
 
-    const priceMonth = monthPlan ? Number(monthPlan.price) : null;
-    const priceYear = yearPlan ? Number(yearPlan.price) : null;
+    const priceMonth = monthPlan ? monthPlan.price : null;
+    const priceYear = yearPlan ? yearPlan.price : null;
     const discount =
       priceMonth && priceYear
         ? Math.max(0, Math.round((1 - priceYear / (priceMonth * 12)) * 100))

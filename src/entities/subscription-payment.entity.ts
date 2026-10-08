@@ -50,7 +50,7 @@ export class SubscriptionPayment extends BaseEntity {
     scale: 2,
     transformer: numericTransformer,
   })
-  amount: string;
+  amount: number;
 
   @Column({ type: 'char', length: 3, default: 'RUB' })
   currency: string;

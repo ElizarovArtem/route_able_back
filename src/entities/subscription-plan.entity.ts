@@ -30,7 +30,7 @@ export class SubscriptionPlan extends BaseEntity {
     default: 0,
     transformer: numericTransformer,
   })
-  price: string;
+  price: number;
 
   @Column({ type: 'char', length: 3, default: 'RUB' })
   currency: string;
