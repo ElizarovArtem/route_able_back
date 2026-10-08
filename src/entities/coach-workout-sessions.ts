@@ -18,6 +18,10 @@ import { CoachWorkoutSessionStatus } from '../config/emuns/coach-billing';
 @Index(['coachId', 'scheduledAt'])
 @Index(['clientId', 'scheduledAt'])
 @Index(['orderId'])
+@Index('uq_session_active_slot', ['timeSlotId'], {
+  unique: true,
+  where: `"status" = 'BOOKED'`,
+})
 export class CoachWorkoutSessions {
   @PrimaryGeneratedColumn('uuid')
   id: string;

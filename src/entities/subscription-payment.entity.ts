@@ -16,11 +16,9 @@ import {
 } from '../config/emuns/subscription';
 
 @Entity('subscription_payments')
-@Index(['userId'])
+@Index(['userId', 'createdAt'])
 @Index(['userSubscriptionId'])
-@Index(['provider'])
-@Index(['status'])
-@Index(['externalPaymentId'])
+@Index(['externalPaymentId'], { unique: true })
 export class SubscriptionPayment {
   @PrimaryGeneratedColumn('uuid')
   id: string;

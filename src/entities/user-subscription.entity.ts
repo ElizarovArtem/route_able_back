@@ -15,8 +15,7 @@ import { SubscriptionStatus } from '../config/emuns/subscription';
 import { SubscriptionPayment } from './subscription-payment.entity';
 
 @Entity('user_subscriptions')
-@Index(['userId'])
-@Index(['status'])
+@Index(['userId', 'status'])
 @Index(['endAt'])
 @Index(['externalSubscriptionId'])
 export class UserSubscription {

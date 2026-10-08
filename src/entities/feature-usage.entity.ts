@@ -12,10 +12,6 @@ import { User } from './user.entity';
 import { PaidFeature } from '../config/emuns/subscription';
 
 @Entity('feature_usage')
-@Index(['userId'])
-@Index(['feature'])
-@Index(['periodStart'])
-@Index(['periodEnd'])
 @Index(['userId', 'feature', 'periodStart', 'periodEnd'], { unique: true })
 export class FeatureUsage {
   @PrimaryGeneratedColumn('uuid')

@@ -12,9 +12,7 @@ import { FeedbackType, FeedbackStatus } from '../config/emuns/feedback';
 import { User } from './user.entity';
 
 @Entity('feedback')
-@Index('i_feedback_created_at', ['createdAt'])
-@Index('i_feedback_status', ['status'])
-@Index('i_feedback_type', ['type'])
+@Index('i_feedback_status_created_at', ['status', 'createdAt'])
 export class Feedback {
   @PrimaryGeneratedColumn('uuid')
   id: string;

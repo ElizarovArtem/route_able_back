@@ -21,7 +21,7 @@ import { CoachWorkoutSessions } from './coach-workout-sessions';
 @Index(['orderId', 'type'])
 @Index(['coachId', 'type', 'status'])
 @Index(['clientId', 'type', 'status'])
-@Index(['provider', 'providerExternalId'], { unique: false })
+@Index(['provider', 'providerExternalId'], { unique: true })
 export class CoachPayment {
   @PrimaryGeneratedColumn('uuid')
   id: string;

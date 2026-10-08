@@ -10,6 +10,7 @@ import { Chat } from './chat.entity';
 import { User } from './user.entity';
 
 @Entity('messages')
+@Index('i_message_chat_created_at', ['chatId', 'createdAt'])
 export class Message {
   @PrimaryGeneratedColumn('uuid') id: string;
 
@@ -21,5 +22,5 @@ export class Message {
 
   @Column('text') text: string;
 
-  @CreateDateColumn() @Index() createdAt: Date;
+  @CreateDateColumn() createdAt: Date;
 }

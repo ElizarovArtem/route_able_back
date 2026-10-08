@@ -16,7 +16,6 @@ export enum TimeSlotStatus {
 }
 
 @Entity('time_slots')
-@Index('i_slot_by_coach_time', ['coachId', 'startAt', 'endAt'])
 @Index('uq_slot_by_coach_time', ['coachId', 'startAt', 'endAt'], {
   unique: true,
 })

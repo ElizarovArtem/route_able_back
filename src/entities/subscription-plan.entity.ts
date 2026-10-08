@@ -16,8 +16,6 @@ import { UserSubscription } from './user-subscription.entity';
 
 @Entity('subscription_plans')
 @Index(['code', 'period'], { unique: true })
-@Index(['isActive'])
-@Index(['sortOrder'])
 export class SubscriptionPlan {
   @PrimaryGeneratedColumn('uuid')
   id: string;

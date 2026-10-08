@@ -11,6 +11,9 @@ import {
 import { User } from './user.entity';
 
 @Entity('coach_profiles')
+@Index('i_coach_profile_public_rating', ['ratingAvg'], {
+  where: '"isPublic" = true',
+})
 export class CoachProfile {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -27,15 +30,12 @@ export class CoachProfile {
   isPublic: boolean;
 
   // агрегаты
-  @Index()
   @Column({ type: 'int', default: 0 })
   ratingSum: number;
 
-  @Index()
   @Column({ type: 'int', default: 0 })
   ratingCount: number;
 
-  @Index()
   @Column({ type: 'numeric', precision: 3, scale: 2, default: 0 })
   ratingAvg: number;
 
