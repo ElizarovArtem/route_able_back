@@ -1,48 +1,19 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  JoinColumn,
-  CreateDateColumn,
-  UpdateDateColumn,
-  Index,
-} from 'typeorm';
-import { User } from './user.entity';
+import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { CoachOrder } from './coach-order.entity';
 import { TimeSlot } from './time-slot.entity';
-import { ClientCoach } from './client-coach.entity';
 import { CoachWorkoutSessionStatus } from '../config/emuns/coach-billing';
+import { PairScopedEntity } from './base/pair-scoped.entity';
+import { numericTransformer } from './base/transformers';
 
 @Entity('coach_sessions')
 @Index(['coachId', 'scheduledAt'])
 @Index(['clientId', 'scheduledAt'])
 @Index(['orderId'])
-export class CoachWorkoutSessions {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
-  @Column('uuid')
-  clientId: string;
-
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'clientId' })
-  client: User;
-
-  @Column('uuid')
-  coachId: string;
-
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'coachId' })
-  coach: User;
-
-  @Column('uuid')
-  clientCoachId: string;
-
-  @ManyToOne(() => ClientCoach, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'clientCoachId' })
-  clientCoach: ClientCoach;
-
+@Index('uq_session_active_slot', ['timeSlotId'], {
+  unique: true,
+  where: `"status" = 'BOOKED'`,
+})
+export class CoachWorkoutSessions extends PairScopedEntity {
   @Column('uuid')
   orderId: string;
 
@@ -70,7 +41,12 @@ export class CoachWorkoutSessions {
   })
   status: CoachWorkoutSessionStatus;
 
-  @Column({ type: 'numeric', precision: 12, scale: 2 })
+  @Column({
+    type: 'numeric',
+    precision: 12,
+    scale: 2,
+    transformer: numericTransformer,
+  })
   price: number;
 
   @Column({ type: 'char', length: 3, default: 'RUB' })
@@ -96,10 +72,4 @@ export class CoachWorkoutSessions {
 
   @Column({ type: 'text', nullable: true })
   disputeReason?: string | null;
-
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
 }

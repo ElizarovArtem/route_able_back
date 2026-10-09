@@ -16,18 +16,15 @@ import {
   Repository,
 } from 'typeorm';
 import { CoachWorkoutSessions } from '../../entities/coach-workout-sessions';
-import { ClientCoach } from '../../entities/client-coach.entity';
-import { ClientCoachTransaction } from '../../entities/client-coach-transaction.entity';
 import { TimeSlot, TimeSlotStatus } from '../../entities/time-slot.entity';
 import { CoachPayment } from '../../entities/coach-payments';
-import { CoachOrder } from '../../entities/coach-order.entity';
 import {
   CoachPaymentStatus,
   CoachPaymentType,
   CoachWorkoutSessionStatus,
-  ClientCoachTransactionType,
 } from '../../config/emuns/coach-billing';
 import { ClientCoachService } from '../clientCoach/clientCoach.service';
+import { SessionBalanceService } from '../coachBilling/session-balance.service';
 import { ListClientUpcomingSessionsQueryDto } from './dto/list-client-upcoming.query';
 import { PAYMENT_PROVIDER } from '../../config/constants/payments';
 import { PaymentProvider } from '../../config/interfaces/payments';
@@ -46,6 +43,7 @@ export class CoachWorkoutSessionsService {
     private readonly sessionsRepo: Repository<CoachWorkoutSessions>,
     private readonly clientCoachService: ClientCoachService,
     private readonly dataSource: DataSource,
+    private readonly sessionBalance: SessionBalanceService,
     @Inject(PAYMENT_PROVIDER)
     private readonly paymentProvider: PaymentProvider,
   ) {}
@@ -193,17 +191,7 @@ export class CoachWorkoutSessionsService {
         throw new BadRequestException('Session already cancelled');
       }
 
-      const relation = await manager.findOne(ClientCoach, {
-        where: { id: session.clientCoachId },
-        lock: { mode: 'pessimistic_write' },
-      });
-      if (!relation) throw new NotFoundException('Relation not found');
-
-      const order = await manager.findOne(CoachOrder, {
-        where: { id: session.orderId },
-        lock: { mode: 'pessimistic_write' },
-      });
-
+      // порядок блокировок везде: слот → пара → заказ (см. TimeSlotsService.bookSlot)
       const slot = await manager.findOne(TimeSlot, {
         where: { id: session.timeSlotId },
         lock: { mode: 'pessimistic_write' },
@@ -213,15 +201,12 @@ export class CoachWorkoutSessionsService {
         await manager.save(slot);
       }
 
-      relation.sessionsReserved = Math.max(relation.sessionsReserved - 1, 0);
-      relation.sessionsRemaining += 1;
-      this.updateRelationActivity(relation);
-      await manager.save(relation);
-
-      if (order) {
-        order.sessionsReserved = Math.max(order.sessionsReserved - 1, 0);
-        await manager.save(order);
-      }
+      await this.sessionBalance.release(
+        manager,
+        session.clientCoachId,
+        session.orderId,
+        `Сессия ${session.id} отменена ${isClient ? 'клиентом' : 'тренером'}`,
+      );
 
       session.status = isClient
         ? CoachWorkoutSessionStatus.CANCELLED_BY_CLIENT
@@ -229,18 +214,6 @@ export class CoachWorkoutSessionsService {
       session.cancelledAt = new Date();
       session.cancelReason = dto?.reason ?? null;
       await manager.save(session);
-
-      const trx = manager.create(ClientCoachTransaction, {
-        clientCoachId: relation.id,
-        type: ClientCoachTransactionType.SESSION_RETURN,
-        deltaSessions: 1,
-        balanceAfter: relation.sessionsRemaining,
-        orderId: session.orderId,
-        comment: `Сессия ${session.id} отменена ${
-          isClient ? 'клиентом' : 'тренером'
-        }`,
-      });
-      await manager.save(trx);
 
       return session;
     });
@@ -379,24 +352,6 @@ export class CoachWorkoutSessionsService {
     return { from, to };
   }
 
-  private updateRelationActivity(relation: ClientCoach) {
-    relation.isActive =
-      relation.sessionsRemaining > 0 || relation.sessionsReserved > 0;
-    if (relation.isActive) {
-      relation.deactivatedAt = null;
-      if (!relation.activatedAt) {
-        relation.activatedAt = new Date();
-      }
-    } else {
-      relation.deactivatedAt = new Date();
-    }
-  }
-
-  private formatMoney(value: number | string) {
-    const num = typeof value === 'number' ? value : Number(value ?? 0);
-    return num.toFixed(2);
-  }
-
   private async finalizeCompletedSession(
     manager: EntityManager,
     session: CoachWorkoutSessions,
@@ -413,49 +368,24 @@ export class CoachWorkoutSessionsService {
       throw new BadRequestException('Session is not ready for confirmation');
     }
 
-    const relation = await manager.findOne(ClientCoach, {
-      where: { id: session.clientCoachId },
-      lock: { mode: 'pessimistic_write' },
-    });
-    if (!relation) throw new NotFoundException('Relation not found');
-
-    const order = await manager.findOne(CoachOrder, {
-      where: { id: session.orderId },
-      lock: { mode: 'pessimistic_write' },
-    });
-    if (!order) throw new NotFoundException('Order not found');
-
-    relation.sessionsReserved = Math.max(relation.sessionsReserved - 1, 0);
-    relation.sessionsUsed += 1;
-    this.updateRelationActivity(relation);
-
     session.status = finalStatus;
     if (timestamp.field === 'clientConfirmedAt') {
       session.clientConfirmedAt = timestamp.timestamp;
     } else {
       session.autoConfirmedAt = timestamp.timestamp;
     }
-
-    await manager.save(relation);
     await manager.save(session);
 
-    order.sessionsReserved = Math.max(order.sessionsReserved - 1, 0);
-    order.sessionsUsed += 1;
-    await manager.save(order);
+    await this.sessionBalance.confirm(
+      manager,
+      session.clientCoachId,
+      session.orderId,
+      `Сессия ${session.id} подтверждена ${confirmedBy}`,
+    );
 
-    const trx = manager.create(ClientCoachTransaction, {
-      clientCoachId: relation.id,
-      type: ClientCoachTransactionType.SESSION_DEBIT,
-      deltaSessions: 0,
-      balanceAfter: relation.sessionsRemaining,
-      orderId: session.orderId,
-      comment: `Сессия ${session.id} подтверждена ${confirmedBy}`,
-    });
-    await manager.save(trx);
-
-    const amount = this.formatMoney(session.price);
+    const amount = session.price;
     const payment = manager.create(CoachPayment, {
-      clientCoachId: relation.id,
+      clientCoachId: session.clientCoachId,
       orderId: session.orderId,
       coachSessionId: session.id,
       clientId: session.clientId,
@@ -463,7 +393,7 @@ export class CoachWorkoutSessionsService {
       type: CoachPaymentType.COACH_PAYOUT,
       status: CoachPaymentStatus.READY_FOR_PAYOUT,
       amount,
-      platformFee: '0.00',
+      platformFee: 0,
       coachAmount: amount,
       currency: session.currency,
       readyForPayoutAt: new Date(),
@@ -486,7 +416,7 @@ export class CoachWorkoutSessionsService {
         clientId: session.clientId,
         orderId: session.orderId,
         sessionId: session.id,
-        amount: Number(payment.coachAmount ?? payment.amount ?? 0),
+        amount: payment.coachAmount ?? payment.amount ?? 0,
         currency: session.currency,
       });
 

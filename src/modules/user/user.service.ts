@@ -183,7 +183,7 @@ export class UserService {
           user.personalGoalProtein != null
             ? Number(user.personalGoalProtein)
             : null,
-        fat: user.personalGoalFat != null ? Number(user.personalGoalFat) : null,
+        fat: user.personalGoalFat ?? null,
         carbs:
           user.personalGoalCarbs != null
             ? Number(user.personalGoalCarbs)

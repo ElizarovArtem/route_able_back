@@ -1,20 +1,13 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  OneToOne,
-  JoinColumn,
-  Index,
-  CreateDateColumn,
-  UpdateDateColumn,
-} from 'typeorm';
+import { Entity, Column, OneToOne, JoinColumn, Index } from 'typeorm';
 import { User } from './user.entity';
+import { BaseEntity } from './base/base.entity';
+import { numericTransformer } from './base/transformers';
 
 @Entity('coach_profiles')
-export class CoachProfile {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
+@Index('i_coach_profile_public_rating', ['ratingAvg'], {
+  where: '"isPublic" = true',
+})
+export class CoachProfile extends BaseEntity {
   @Index({ unique: true })
   @Column({ type: 'uuid' })
   userId: string;
@@ -27,21 +20,18 @@ export class CoachProfile {
   isPublic: boolean;
 
   // агрегаты
-  @Index()
   @Column({ type: 'int', default: 0 })
   ratingSum: number;
 
-  @Index()
   @Column({ type: 'int', default: 0 })
   ratingCount: number;
 
-  @Index()
-  @Column({ type: 'numeric', precision: 3, scale: 2, default: 0 })
+  @Column({
+    type: 'numeric',
+    precision: 3,
+    scale: 2,
+    default: 0,
+    transformer: numericTransformer,
+  })
   ratingAvg: number;
-
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
 }

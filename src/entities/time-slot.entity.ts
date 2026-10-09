@@ -1,13 +1,13 @@
 import {
   Entity,
-  PrimaryGeneratedColumn,
   Column,
   ManyToOne,
   JoinColumn,
-  CreateDateColumn,
-  Index,
+  Check,
+  Exclusion,
 } from 'typeorm';
 import { User } from './user.entity';
+import { BaseEntity } from './base/base.entity';
 
 export enum TimeSlotStatus {
   FREE = 'FREE',
@@ -16,14 +16,12 @@ export enum TimeSlotStatus {
 }
 
 @Entity('time_slots')
-@Index('i_slot_by_coach_time', ['coachId', 'startAt', 'endAt'])
-@Index('uq_slot_by_coach_time', ['coachId', 'startAt', 'endAt'], {
-  unique: true,
-})
-export class TimeSlot {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
+@Check('chk_time_slot_range', `"endAt" > "startAt"`)
+@Exclusion(
+  'no_slot_overlap',
+  `USING gist ("coachId" WITH =, tstzrange("startAt", "endAt") WITH &&) WHERE ("status" <> 'DISABLED')`,
+)
+export class TimeSlot extends BaseEntity {
   @Column('uuid')
   coachId: string;
 
@@ -43,9 +41,6 @@ export class TimeSlot {
     default: TimeSlotStatus.FREE,
   })
   status: TimeSlotStatus;
-
-  @CreateDateColumn()
-  createdAt: Date;
 
   @Column({ type: 'text', nullable: true })
   note?: string | null;

@@ -3,6 +3,7 @@ import {
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
+  Index,
 } from 'typeorm';
 import { Optional } from '@nestjs/common';
 
@@ -18,10 +19,12 @@ export class AuthCodes {
   id: number;
 
   @Optional()
+  @Index()
   @Column({ nullable: true })
   phone: string;
 
   @Optional()
+  @Index()
   @Column({ nullable: true })
   email: string;
 
@@ -34,6 +37,6 @@ export class AuthCodes {
   })
   channel: AuthChannel;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 }

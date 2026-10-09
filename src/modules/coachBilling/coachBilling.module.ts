@@ -9,6 +9,7 @@ import { CoachOffersController } from './coachOffers.controller';
 import { CoachOrdersController } from './coachOrders.controller';
 import { CoachBillingService } from './coachBilling.service';
 import { CoachOffersService } from './coachOffers.service';
+import { SessionBalanceService } from './session-balance.service';
 
 @Module({
   imports: [
@@ -21,7 +22,7 @@ import { CoachOffersService } from './coachOffers.service';
     ]),
   ],
   controllers: [CoachOffersController, CoachOrdersController],
-  providers: [CoachBillingService, CoachOffersService],
-  exports: [CoachBillingService, CoachOffersService],
+  providers: [CoachBillingService, CoachOffersService, SessionBalanceService],
+  exports: [CoachBillingService, CoachOffersService, SessionBalanceService],
 })
 export class CoachBillingModule {}

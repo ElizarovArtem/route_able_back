@@ -59,10 +59,10 @@ export class MealService {
 
     const summary = meals.reduce(
       (acc, m) => {
-        acc.calories += Number(m.calories);
-        acc.protein += Number(m.protein);
-        acc.fat += Number(m.fat);
-        acc.carbs += Number(m.carbs);
+        acc.calories += m.calories;
+        acc.protein += m.protein;
+        acc.fat += m.fat;
+        acc.carbs += m.carbs;
         return acc;
       },
       { calories: 0, protein: 0, fat: 0, carbs: 0 },
@@ -77,10 +77,10 @@ export class MealService {
 
     const personalGoals = hasPersonalGoals
       ? {
-          calories: Number(user.personalGoalCalories) ?? null,
-          protein: Number(user.personalGoalProtein) ?? null,
-          fat: Number(user.personalGoalFat) ?? null,
-          carbs: Number(user.personalGoalCarbs) ?? null,
+          calories: user.personalGoalCalories,
+          protein: user.personalGoalProtein,
+          fat: user.personalGoalFat,
+          carbs: user.personalGoalCarbs,
         }
       : null;
 
@@ -104,10 +104,10 @@ export class MealService {
           clientCoachId: rel.id,
           coachId: rel.coachId,
           coachName: rel.coach?.name ?? null,
-          calories: Number(rel.goalCalories) ?? null,
-          protein: Number(rel.goalProtein) ?? null,
-          fat: Number(rel.goalFat) ?? null,
-          carbs: Number(rel.goalCarbs) ?? null,
+          calories: rel.goalCalories,
+          protein: rel.goalProtein,
+          fat: rel.goalFat,
+          carbs: rel.goalCarbs,
         };
       })
       .filter((g) => g !== null);

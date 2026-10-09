@@ -18,11 +18,13 @@ import {
   CoachPaymentType,
 } from '../../config/emuns/coach-billing';
 import { CoachPayment } from '../../entities/coach-payments';
+import { SessionBalanceService } from './session-balance.service';
 
 @Injectable()
 export class CoachBillingService {
   constructor(
     private readonly dataSource: DataSource,
+    private readonly sessionBalance: SessionBalanceService,
 
     @InjectRepository(CoachOffer)
     private readonly offerRepo: Repository<CoachOffer>,
@@ -122,9 +124,9 @@ export class CoachBillingService {
         coachId: offer.coachId,
         type: CoachPaymentType.ORDER_PAYMENT,
         status: CoachPaymentStatus.CREATED,
-        amount: String(order.amount),
-        platformFee: '0',
-        coachAmount: '0',
+        amount: order.amount,
+        platformFee: 0,
+        coachAmount: 0,
         currency: order.currency,
       });
 
@@ -142,8 +144,22 @@ export class CoachBillingService {
       const clientCoachRepo = tx.getRepository(ClientCoach);
       const transactionRepo = tx.getRepository(ClientCoachTransaction);
 
+      // порядок блокировок везде: слот → пара → заказ. Блокировка пары сериализует
+      // параллельные активации (вебхук + возврат с оплаты) и бронирования.
+      const probe = await orderRepo.findOne({ where: { id: orderId } });
+
+      if (!probe) {
+        throw new NotFoundException('Order not found');
+      }
+
+      await clientCoachRepo.findOne({
+        where: { id: probe.clientCoachId },
+        lock: { mode: 'pessimistic_write' },
+      });
+
       const order = await orderRepo.findOne({
         where: { id: orderId },
+        lock: { mode: 'pessimistic_write' },
       });
 
       if (!order) {
@@ -186,32 +202,12 @@ export class CoachBillingService {
         await orderRepo.save(order);
       }
 
-      const relation = await clientCoachRepo.findOne({
-        where: { id: order.clientCoachId },
-      });
-
-      if (!relation) {
-        throw new NotFoundException('ClientCoach relation not found');
-      }
-
-      relation.sessionsTotal += order.sessionCount;
-      relation.sessionsRemaining += order.sessionCount;
-      relation.isActive = relation.sessionsRemaining > 0;
-      relation.activatedAt = relation.activatedAt ?? new Date();
-      relation.deactivatedAt = null;
-
-      await clientCoachRepo.save(relation);
-
-      const trx = transactionRepo.create({
-        clientCoachId: relation.id,
-        type: ClientCoachTransactionType.PURCHASE_CREDIT,
-        deltaSessions: order.sessionCount,
-        balanceAfter: relation.sessionsRemaining,
-        orderId: order.id,
-        comment: `Начисление по заказу ${order.id}`,
-      });
-
-      await transactionRepo.save(trx);
+      const relation = await this.sessionBalance.credit(
+        tx,
+        order.clientCoachId,
+        order,
+        `Начисление по заказу ${order.id}`,
+      );
 
       return {
         orderId: order.id,
@@ -226,47 +222,6 @@ export class CoachBillingService {
     }
 
     return this.dataSource.transaction(run);
-  }
-
-  async consumeSession(clientId: string, coachId: string, comment?: string) {
-    return this.dataSource.transaction(async (tx) => {
-      const clientCoachRepo = tx.getRepository(ClientCoach);
-      const transactionRepo = tx.getRepository(ClientCoachTransaction);
-
-      const relation = await clientCoachRepo.findOne({
-        where: { clientId, coachId },
-      });
-
-      if (!relation) {
-        throw new NotFoundException('Relation not found');
-      }
-
-      if (relation.sessionsRemaining <= 0) {
-        throw new BadRequestException('Нет доступных занятий');
-      }
-
-      relation.sessionsRemaining -= 1;
-      relation.sessionsUsed += 1;
-      relation.isActive = relation.sessionsRemaining > 0;
-
-      if (!relation.isActive) {
-        relation.deactivatedAt = new Date();
-      }
-
-      const saved = await clientCoachRepo.save(relation);
-
-      const trx = transactionRepo.create({
-        clientCoachId: saved.id,
-        type: ClientCoachTransactionType.SESSION_DEBIT,
-        deltaSessions: -1,
-        balanceAfter: saved.sessionsRemaining,
-        comment: comment ?? 'Списание занятия',
-      });
-
-      await transactionRepo.save(trx);
-
-      return saved;
-    });
   }
 
   async getMyOrder(clientId: string, orderId: string) {

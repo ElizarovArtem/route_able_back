@@ -1,38 +1,19 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  JoinColumn,
-  CreateDateColumn,
-  UpdateDateColumn,
-  Index,
-} from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { CoachOrder } from './coach-order.entity';
-import { User } from './user.entity';
-import { ClientCoach } from './client-coach.entity';
 import {
   CoachPaymentType,
   CoachPaymentStatus,
 } from '../config/emuns/coach-billing';
 import { CoachWorkoutSessions } from './coach-workout-sessions';
+import { PairScopedEntity } from './base/pair-scoped.entity';
+import { numericTransformer } from './base/transformers';
 
 @Entity('coach_payments')
 @Index(['orderId', 'type'])
 @Index(['coachId', 'type', 'status'])
 @Index(['clientId', 'type', 'status'])
-@Index(['provider', 'providerExternalId'], { unique: false })
-export class CoachPayment {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
-  @Column('uuid')
-  clientCoachId: string;
-
-  @ManyToOne(() => ClientCoach, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'clientCoachId', referencedColumnName: 'id' })
-  clientCoach: ClientCoach;
-
+@Index(['provider', 'providerExternalId'], { unique: true })
+export class CoachPayment extends PairScopedEntity {
   @Column('uuid')
   orderId: string;
 
@@ -50,20 +31,6 @@ export class CoachPayment {
   @JoinColumn({ name: 'coachSessionId', referencedColumnName: 'id' })
   coachSession?: CoachWorkoutSessions | null;
 
-  @Column('uuid')
-  clientId: string;
-
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'clientId', referencedColumnName: 'id' })
-  client: User;
-
-  @Column('uuid')
-  coachId: string;
-
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'coachId', referencedColumnName: 'id' })
-  coach: User;
-
   @Column({
     type: 'enum',
     enum: CoachPaymentType,
@@ -77,14 +44,31 @@ export class CoachPayment {
   })
   status: CoachPaymentStatus;
 
-  @Column({ type: 'numeric', precision: 12, scale: 2 })
-  amount: string;
+  @Column({
+    type: 'numeric',
+    precision: 12,
+    scale: 2,
+    transformer: numericTransformer,
+  })
+  amount: number;
 
-  @Column({ type: 'numeric', precision: 12, scale: 2, default: 0 })
-  platformFee: string;
+  @Column({
+    type: 'numeric',
+    precision: 12,
+    scale: 2,
+    default: 0,
+    transformer: numericTransformer,
+  })
+  platformFee: number;
 
-  @Column({ type: 'numeric', precision: 12, scale: 2, default: 0 })
-  coachAmount: string;
+  @Column({
+    type: 'numeric',
+    precision: 12,
+    scale: 2,
+    default: 0,
+    transformer: numericTransformer,
+  })
+  coachAmount: number;
 
   @Column({ type: 'char', length: 3, default: 'RUB' })
   currency: string;
@@ -115,10 +99,4 @@ export class CoachPayment {
 
   @Column({ type: 'timestamptz', nullable: true })
   refundedAt?: Date | null;
-
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
 }

@@ -1,24 +1,11 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  JoinColumn,
-  CreateDateColumn,
-  UpdateDateColumn,
-  Index,
-} from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { FeedbackType, FeedbackStatus } from '../config/emuns/feedback';
 import { User } from './user.entity';
+import { BaseEntity } from './base/base.entity';
 
 @Entity('feedback')
-@Index('i_feedback_created_at', ['createdAt'])
-@Index('i_feedback_status', ['status'])
-@Index('i_feedback_type', ['type'])
-export class Feedback {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
+@Index('i_feedback_status_created_at', ['status', 'createdAt'])
+export class Feedback extends BaseEntity {
   @Column('uuid', { nullable: true })
   userId?: string | null;
 
@@ -53,10 +40,4 @@ export class Feedback {
 
   @Column({ type: 'text', nullable: true })
   deliveryError?: string | null;
-
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
 }

@@ -1,22 +1,11 @@
 import { CoachVerificationStatus } from 'src/config/emuns/coach-verification';
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-  ManyToOne,
-  JoinColumn,
-  Index,
-} from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { User } from './user.entity';
+import { BaseEntity } from './base/base.entity';
 
 @Entity('coach_verification')
 @Index(['userId'], { unique: true })
-export class CoachVerificationRequest {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
+export class CoachVerificationRequest extends BaseEntity {
   @Column({ type: 'uuid' })
   userId: string;
 
@@ -42,10 +31,4 @@ export class CoachVerificationRequest {
 
   @Column({ type: 'timestamptz', nullable: true })
   reviewedAt: Date | null;
-
-  @CreateDateColumn({ type: 'timestamptz' })
-  createdAt: Date;
-
-  @UpdateDateColumn({ type: 'timestamptz' })
-  updatedAt: Date;
 }

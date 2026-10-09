@@ -1,20 +1,27 @@
 import {
   Entity,
-  PrimaryGeneratedColumn,
   Column,
   ManyToOne,
   Unique,
-  CreateDateColumn,
   JoinColumn,
+  Index,
+  Check,
 } from 'typeorm';
 import { User } from './user.entity';
+import { BaseEntity } from './base/base.entity';
 
 @Entity('client_coach')
+@Check(
+  'chk_client_coach_sessions_non_negative',
+  `"sessionsTotal" >= 0 AND "sessionsUsed" >= 0 AND "sessionsReserved" >= 0`,
+)
+@Check(
+  'chk_client_coach_sessions_within_total',
+  `"sessionsUsed" + "sessionsReserved" <= "sessionsTotal"`,
+)
 @Unique('uq_client_coach_pair', ['clientId', 'coachId'])
-export class ClientCoach {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
+@Index('i_client_coach_coach', ['coachId'])
+export class ClientCoach extends BaseEntity {
   @Column('uuid')
   clientId: string;
 
@@ -28,9 +35,6 @@ export class ClientCoach {
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'coachId', referencedColumnName: 'id' })
   coach: User;
-
-  @CreateDateColumn()
-  createdAt: Date;
 
   // есть ли сейчас активное платное взаимодействие
   @Column({ type: 'boolean', default: false })
@@ -48,7 +52,12 @@ export class ClientCoach {
   @Column({ type: 'int', default: 0 })
   sessionsUsed: number;
 
-  @Column({ type: 'int', default: 0 })
+  // вычисляется базой: total - used - reserved (записать нельзя)
+  @Column({
+    type: 'int',
+    generatedType: 'STORED',
+    asExpression: '"sessionsTotal" - "sessionsUsed" - "sessionsReserved"',
+  })
   sessionsRemaining: number;
 
   @Column({ type: 'int', default: 0 })

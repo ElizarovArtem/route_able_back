@@ -31,7 +31,6 @@ import { CoachVerificationModule } from '../coachVerification/coachVerification.
 import { CoachReviewsModule } from '../coachReview/coachReview.module';
 import { CoachReview } from '../../entities/coach-review.entity';
 import { CoachProfile } from '../../entities/coach-profile.entity';
-import { Purchase } from '../../entities/purchase.entity';
 import { CoachBillingModule } from '../coachBilling/coachBilling.module';
 import { PaymentsModule } from '../payment/payments.module';
 import { ClientCoachTransaction } from '../../entities/client-coach-transaction.entity';
@@ -48,6 +47,7 @@ import { UserSubscription } from '../../entities/user-subscription.entity';
 import { SubscriptionPayment } from '../../entities/subscription-payment.entity';
 import { FeatureUsage } from '../../entities/feature-usage.entity';
 import { Product } from '../../entities/product.entity';
+import { VideoLesson } from '../../entities/video-lesson.entity';
 import { ProductsModule } from '../products/products.module';
 
 @Module({
@@ -87,7 +87,6 @@ import { ProductsModule } from '../products/products.module';
           CoachVerificationRequest,
           CoachReview,
           CoachProfile,
-          Purchase,
           ClientCoachTransaction,
           CoachOffer,
           CoachOrder,
@@ -97,8 +96,9 @@ import { ProductsModule } from '../products/products.module';
           SubscriptionPayment,
           FeatureUsage,
           Product,
+          VideoLesson,
         ],
-        synchronize: true, // Только для разработки
+        synchronize: config.get('DB_SYNCHRONIZE') === 'true',
       }),
     }),
 

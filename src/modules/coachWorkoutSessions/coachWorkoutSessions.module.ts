@@ -9,6 +9,7 @@ import { CoachWorkoutSessionsService } from './coachWorkoutSessions.service';
 import { CoachWorkoutSessionsController } from './coachWorkoutSessions.controller';
 import { ClientCoachModule } from '../clientCoach/clientCoach.module';
 import { PaymentsModule } from '../payment/payments.module';
+import { CoachBillingModule } from '../coachBilling/coachBilling.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { PaymentsModule } from '../payment/payments.module';
       CoachPayment,
     ]),
     ClientCoachModule,
+    CoachBillingModule,
     PaymentsModule,
   ],
   controllers: [CoachWorkoutSessionsController],

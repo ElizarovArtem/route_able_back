@@ -1,21 +1,13 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  CreateDateColumn,
-  Unique,
-  JoinColumn,
-} from 'typeorm';
+import { Entity, Column, ManyToOne, Unique, Index, JoinColumn } from 'typeorm';
 import { Day } from './day.entity';
 import { PlannedMeal } from './planned-meal.entity';
+import { BaseEntity } from './base/base.entity';
+import { numericTransformer } from './base/transformers';
 
 @Entity('meals')
 @Unique('uq_meal_planned_id', ['plannedMealId'])
-export class Meal {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
+@Index('i_meal_day_created_at', ['day', 'createdAt'])
+export class Meal extends BaseEntity {
   @ManyToOne(() => Day, (day) => day.meals, { onDelete: 'CASCADE' })
   day: Day;
 
@@ -36,6 +28,7 @@ export class Meal {
     type: 'numeric',
     precision: 10,
     scale: 2,
+    transformer: numericTransformer,
   })
   calories: number;
 
@@ -43,6 +36,7 @@ export class Meal {
     type: 'numeric',
     precision: 10,
     scale: 2,
+    transformer: numericTransformer,
   })
   protein: number;
 
@@ -50,6 +44,7 @@ export class Meal {
     type: 'numeric',
     precision: 10,
     scale: 2,
+    transformer: numericTransformer,
   })
   fat: number;
 
@@ -57,9 +52,7 @@ export class Meal {
     type: 'numeric',
     precision: 10,
     scale: 2,
+    transformer: numericTransformer,
   })
   carbs: number;
-
-  @CreateDateColumn()
-  createdAt: Date;
 }

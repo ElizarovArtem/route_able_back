@@ -1,18 +1,11 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  JoinColumn,
-} from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { WorkoutSession } from './workout-session.entity';
 import { ExerciseKey, WorkoutExerciseStatus } from '../config/emuns/ai-workout';
+import { BaseEntity } from './base/base.entity';
 
 @Entity('workout_exercises')
-export class WorkoutExercise {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
+@Index('i_workout_exercise_session_order', ['sessionId', 'order'])
+export class WorkoutExercise extends BaseEntity {
   @Column('uuid')
   sessionId: string;
 

@@ -7,9 +7,11 @@ import { TimeSlotsService } from './timeSlots.service';
 import { TimeSlotsController } from './timeSlots.controller';
 import { CoachTimeSlotsController } from './coachTimeSlots.controller';
 import { CoachWorkoutSessions } from '../../entities/coach-workout-sessions';
+import { CoachBillingModule } from '../coachBilling/coachBilling.module';
 
 @Module({
   imports: [
+    CoachBillingModule,
     TypeOrmModule.forFeature([
       TimeSlot,
       ClientCoach,
